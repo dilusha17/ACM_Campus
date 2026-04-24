@@ -13,7 +13,7 @@ class AdminSeeder extends Seeder
             ['email' => 'admin@acmcampus.uk'],
             [
                 'name'     => 'ACM Admin',
-                'password' => bcrypt('Admin@123'),
+                'password' => bcrypt('Nobal@321'),
             ]
         );
     }
