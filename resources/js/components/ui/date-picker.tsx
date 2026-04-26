@@ -18,6 +18,8 @@ interface DatePickerProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  fromYear?: number;
+  toYear?: number;
 }
 
 export function DatePicker({
@@ -26,6 +28,8 @@ export function DatePicker({
   placeholder = "Pick a date",
   className,
   disabled,
+  fromYear = 1920,
+  toYear = new Date().getFullYear(),
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -53,6 +57,9 @@ export function DatePicker({
             onChange(date);
             setOpen(false);
           }}
+          captionLayout="dropdown-buttons"
+          fromYear={fromYear}
+          toYear={toYear}
           initialFocus
         />
       </PopoverContent>
