@@ -12,6 +12,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageCropper } from "@/components/ui/image-cropper";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useState } from "react";
 
 const Field = ({
@@ -128,6 +138,7 @@ const Edit = ({ program }: { program: Program }) => {
     entry: string[];
     is_active: boolean;
     cover_photo: File | null;
+    remove_cover_photo: boolean;
   }>({
     _method: "PUT",
     slug: program.slug,
@@ -141,7 +152,22 @@ const Edit = ({ program }: { program: Program }) => {
     entry: program.entry ?? [],
     is_active: program.is_active,
     cover_photo: null,
+    remove_cover_photo: false,
   });
+
+  const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+  const [cropperKey, setCropperKey] = useState(0);
+
+  const handleCoverPhotoChange = (file: File | null) => {
+    if (file !== null && program.cover_photo) {
+      setPendingCoverFile(file);
+    } else if (file === null) {
+      // Red X clicked — explicitly remove the cover photo
+      setData((prev) => ({ ...prev, cover_photo: null, remove_cover_photo: true }));
+    } else {
+      setData("cover_photo", file);
+    }
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -283,10 +309,11 @@ const Edit = ({ program }: { program: Program }) => {
           </div>
           <div className="px-6 pb-6">
             <ImageCropper
+              key={cropperKey}
               aspectRatio={16 / 9}
               maxSizeMb={10}
               currentUrl={program.cover_photo ? `/${program.cover_photo}` : null}
-              onChange={(f) => setData("cover_photo", f)}
+              onChange={handleCoverPhotoChange}
               label=""
               error={errors.cover_photo as unknown as string}
             />
@@ -323,6 +350,39 @@ const Edit = ({ program }: { program: Program }) => {
             </Link>
           </div>
         </form>
+
+        {/* Confirm cover photo replacement */}
+        <AlertDialog
+          open={!!pendingCoverFile}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingCoverFile(null);
+              setCropperKey((k) => k + 1);
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Replace Cover Photo?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The existing cover image will be permanently deleted from the server when you save.
+                This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={() => {
+                  setData("cover_photo", pendingCoverFile);
+                  setPendingCoverFile(null);
+                }}
+              >
+                Replace
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
   );

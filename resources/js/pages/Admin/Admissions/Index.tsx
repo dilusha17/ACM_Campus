@@ -1,6 +1,13 @@
 import { Link, router } from "@inertiajs/react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { Search } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const statusStyles: Record<string, string> = {
   pending:  "bg-amber-50 text-amber-700 ring-1 ring-amber-200/80",
@@ -31,7 +38,7 @@ const Index = ({ admissions, filters }: Props) => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 max-w-6xl">
+      <div className="space-y-6 max-w-7xl">
         {/* Page header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Admissions</h1>
@@ -50,16 +57,17 @@ const Index = ({ admissions, filters }: Props) => {
               className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]/30"
             />
           </div>
-          <select
-            value={filters.status ?? ""}
-            onChange={(e) => setFilter("status", e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-          >
-            <option value="">All statuses</option>
-            {["pending","reviewed","accepted","rejected"].map((s) => (
-              <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-            ))}
-          </select>
+          <Select value={filters.status ?? "all"} onValueChange={(v) => setFilter("status", v === "all" ? "" : v)}>
+            <SelectTrigger className="w-40 rounded-xl border-gray-200 text-sm">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {["pending","reviewed","accepted","rejected"].map((s) => (
+                <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Table */}

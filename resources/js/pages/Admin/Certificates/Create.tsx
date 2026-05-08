@@ -1,6 +1,6 @@
-import { Link, router, usePage } from "@inertiajs/react";
+import { Link, useForm, usePage } from "@inertiajs/react";
 import AdminLayout from "@/layouts/AdminLayout";
-import { ChevronLeft, Plus, RefreshCw, Award } from "lucide-react";
+import { ChevronLeft, Plus, RefreshCw, Award, Paperclip } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
-import { useState } from "react";
+import { useRef } from "react";
 
 interface Program {
   id: number;
@@ -52,11 +52,19 @@ const Create = ({
 
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - i);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
-  const [selectedProgramSlug, setSelectedProgramSlug] = useState("");
-  const [selectedYear, setSelectedYear] = useState(String(currentYear));
-  const [level, setLevel] = useState("Diploma");
-  const [generating, setGenerating] = useState(false);
+  const { data, setData, post, processing } = useForm<{
+    program_slug: string;
+    graduated_year: string;
+    level: string;
+    pdf: File | null;
+  }>({
+    program_slug:   "",
+    graduated_year: String(currentYear),
+    level:          "Diploma",
+    pdf:            null,
+  });
 
   const programOptions = programs.map((p) => ({
     value: p.slug,
@@ -65,19 +73,14 @@ const Create = ({
   }));
 
   const handleProgramChange = (slug: string) => {
-    setSelectedProgramSlug(slug);
+    setData("program_slug", slug);
     const prog = programs.find((p) => p.slug === slug);
-    if (prog) setLevel(prog.level);
+    if (prog) setData("level", prog.level);
   };
 
   const handleGenerate = () => {
-    if (!selectedProgramSlug) return;
-    setGenerating(true);
-    router.post(
-      "/admin/certificates",
-      { program_slug: selectedProgramSlug, graduated_year: selectedYear, level },
-      { onFinish: () => setGenerating(false) }
-    );
+    if (!data.program_slug) return;
+    post("/admin/certificates", { forceFormData: true });
   };
 
   return (
@@ -127,7 +130,7 @@ const Create = ({
               <Label className="text-sm font-medium text-gray-700">Programme</Label>
               <Combobox
                 options={programOptions}
-                value={selectedProgramSlug}
+                value={data.program_slug}
                 onChange={handleProgramChange}
                 placeholder="Select programme…"
                 searchPlaceholder="Search programmes…"
@@ -137,7 +140,7 @@ const Create = ({
             {/* Graduate Year */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium text-gray-700">Graduate Year</Label>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <Select value={data.graduated_year} onValueChange={(v) => setData("graduated_year", v)}>
                 <SelectTrigger className="rounded-xl border-gray-200">
                   <SelectValue />
                 </SelectTrigger>
@@ -154,7 +157,7 @@ const Create = ({
             {/* Level */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium text-gray-700">Certificate Level</Label>
-              <Select value={level} onValueChange={setLevel}>
+              <Select value={data.level} onValueChange={(v) => setData("level", v)}>
                 <SelectTrigger className="rounded-xl border-gray-200">
                   <SelectValue />
                 </SelectTrigger>
@@ -168,13 +171,33 @@ const Create = ({
               </Select>
             </div>
 
+            {/* Sample Certificate PDF */}
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">Sample Certificate Image <span className="text-gray-400 font-normal">(optional — JPG/PNG/WebP)</span></Label>
+              <input
+                ref={pdfInputRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                className="hidden"
+                onChange={(e) => setData("pdf", e.target.files?.[0] ?? null)}
+              />
+              <button
+                type="button"
+                onClick={() => pdfInputRef.current?.click()}
+                className="inline-flex items-center gap-2 border border-dashed border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-colors w-full"
+              >
+                <Paperclip size={14} className="shrink-0" />
+                <span className="truncate">{data.pdf ? data.pdf.name : "Click to attach image…"}</span>
+              </button>
+            </div>
+
             {/* ID preview */}
-            {selectedProgramSlug && (
+            {data.program_slug && (
               <div className="sm:col-span-2">
                 <p className="text-xs text-gray-400">
                   Next ID will follow the pattern:{" "}
                   <span className="font-mono font-semibold text-gray-600">
-                    ACM-{selectedYear}-{selectedProgramSlug.toUpperCase().replace(/-/g, "")}-XXX
+                    ACM-{data.graduated_year}-{data.program_slug.toUpperCase().replace(/-/g, "")}-XXX
                   </span>
                 </p>
               </div>
@@ -185,15 +208,15 @@ const Create = ({
             <button
               type="button"
               onClick={handleGenerate}
-              disabled={generating || !selectedProgramSlug}
+              disabled={processing || !data.program_slug}
               className="inline-flex items-center gap-2 bg-[#1a3a5c] text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 disabled:opacity-50 transition-colors shadow-sm"
             >
-              {generating ? (
+              {processing ? (
                 <RefreshCw size={14} className="animate-spin" />
               ) : (
                 <Plus size={14} />
               )}
-              {generating ? "Generating…" : "Generate Certificate"}
+              {processing ? "Generating…" : "Generate Certificate"}
             </button>
           </div>
         </div>

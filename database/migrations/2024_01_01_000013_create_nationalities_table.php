@@ -8,11 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Superseded by 2024_01_01_000016_create_programs_certificates_table.php
+        Schema::create('nationalities', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->unique();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
-        //
+        Schema::dropIfExists('nationalities');
     }
 };

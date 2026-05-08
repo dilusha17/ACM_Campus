@@ -12,6 +12,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Certificate {
   id: number;
@@ -103,24 +110,26 @@ const Index = ({ certificates, filters }: Props) => {
               className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
             />
           </div>
-          <select
-            value={filters?.status ?? ""}
-            onChange={(e) => setFilter("status", e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-          >
-            <option value="">All statuses</option>
-            <option value="active">Active</option>
-            <option value="revoked">Revoked</option>
-          </select>
-          <select
-            value={filters?.assigned ?? ""}
-            onChange={(e) => setFilter("assigned", e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-          >
-            <option value="">All assignments</option>
-            <option value="yes">Assigned</option>
-            <option value="no">Unassigned</option>
-          </select>
+          <Select value={filters?.status ?? "all"} onValueChange={(v) => setFilter("status", v === "all" ? "" : v)}>
+            <SelectTrigger className="w-40 rounded-xl border-gray-200 text-sm">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="revoked">Revoked</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filters?.assigned ?? "all"} onValueChange={(v) => setFilter("assigned", v === "all" ? "" : v)}>
+            <SelectTrigger className="w-44 rounded-xl border-gray-200 text-sm">
+              <SelectValue placeholder="All assignments" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All assignments</SelectItem>
+              <SelectItem value="yes">Assigned</SelectItem>
+              <SelectItem value="no">Unassigned</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
@@ -128,7 +137,7 @@ const Index = ({ certificates, filters }: Props) => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-50 bg-gray-50/60">
-                  {["Student", "Certificate No.", "Programme", "Level", "Issue Date", "Status", ""].map((h, i) => (
+                  {["Certificate No.", "Programme", "Level", "Issue Date", "Status", ""].map((h, i) => (
                     <th key={i} className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -136,25 +145,13 @@ const Index = ({ certificates, filters }: Props) => {
               <tbody className="divide-y divide-gray-50">
                 {certificates.data.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-5 py-10 text-center text-gray-400 text-sm">
+                    <td colSpan={6} className="px-5 py-10 text-center text-gray-400 text-sm">
                       No certificates found.
                     </td>
                   </tr>
                 )}
                 {certificates.data.map((cert) => (
                   <tr key={cert.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-5 py-3.5">
-                      {cert.student ? (
-                        <>
-                          <div className="font-medium text-gray-900">{cert.student.full_name}</div>
-                          <div className="text-xs text-gray-400 mt-0.5">{cert.student.student_id}</div>
-                        </>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                          Unassigned
-                        </span>
-                      )}
-                    </td>
                     <td className="px-5 py-3.5 font-mono text-xs text-gray-700">{cert.certificate_number}</td>
                     <td className="px-5 py-3.5 max-w-[180px]">
                       <p className="truncate font-medium text-gray-600">{cert.program_title}</p>

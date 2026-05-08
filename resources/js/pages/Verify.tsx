@@ -49,6 +49,7 @@ interface Certificate {
   issue_date: string;
   level: string;
   status: string;
+  certificate_sample: string | null;
 }
 
 interface ProgramEnrollment {
@@ -110,6 +111,7 @@ const Verify = ({ result, searched, query }: Props) => {
   const [studentId, setStudentId] = useState(query?.student_id ?? "");
   const [privacyOpen, setPrivacyOpen] = useState(!searched);
   const [openCertSlug, setOpenCertSlug] = useState<string | null>(null);
+  const [openSampleSlug, setOpenSampleSlug] = useState<string | null>(null);
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
@@ -319,11 +321,11 @@ const Verify = ({ result, searched, query }: Props) => {
                                 </div>
 
                                 {prog.status === "graduated" && prog.certificate && prog.certificate.status === "active" && (
-                                  <div className="pt-1">
+                                  <div className="pt-1 flex flex-wrap gap-2">
                                     <Dialog open={openCertSlug === certKey} onOpenChange={(o) => setOpenCertSlug(o ? certKey : null)}>
                                       <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
-                                          <FileText size={13} /> View Certificate
+                                          <FileText size={13} /> View E - Certificate
                                         </Button>
                                       </DialogTrigger>
                                       <DialogContent className="max-w-2xl">
@@ -331,7 +333,12 @@ const Verify = ({ result, searched, query }: Props) => {
                                           <DialogTitle className="font-display">Certificate Preview</DialogTitle>
                                           <DialogDescription className="font-body">Stylised representation of the issued credential.</DialogDescription>
                                         </DialogHeader>
-                                        <div className="border-2 border-secondary/30 rounded-lg p-8 bg-gradient-to-br from-background to-muted/40 text-center space-y-4">
+                                        <div className="relative border-2 border-secondary/30 rounded-lg p-8 bg-gradient-to-br from-background to-muted/40 text-center space-y-4 overflow-hidden">
+                                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden rounded-lg">
+                                            <p style={{ transform: "rotate(-45deg)", fontSize: "3.5rem", opacity: 0.07, fontWeight: 900, whiteSpace: "nowrap", color: "#1a3a5c", userSelect: "none" }}>
+                                              E-CERTIFICATE
+                                            </p>
+                                          </div>
                                           <p className="font-body text-xs uppercase tracking-[0.3em] text-secondary">ACM Campus · United Kingdom</p>
                                           <h4 className="font-display text-2xl font-bold text-foreground">Certificate of Award</h4>
                                           <p className="font-body text-sm text-muted-foreground">This is to certify that</p>
@@ -352,6 +359,46 @@ const Verify = ({ result, searched, query }: Props) => {
                                         </div>
                                       </DialogContent>
                                     </Dialog>
+
+                                    {prog.certificate.certificate_sample && (
+                                      <Dialog
+                                        open={openSampleSlug === certKey}
+                                        onOpenChange={(o) => {
+                                          setOpenSampleSlug(o ? certKey : null);
+                                          if (o) setOpenCertSlug(null);
+                                        }}
+                                      >
+                                        <DialogTrigger asChild>
+                                          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
+                                            <FileText size={13} /> Sample Certificate
+                                          </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="p-0 overflow-hidden" style={{ width: "min(90vh * 0.707, 90vw)", maxWidth: "none", maxHeight: "95vh" }}>
+                                          <DialogHeader className="px-5 pt-5 pb-3">
+                                            <DialogTitle className="font-display">Sample Certificate</DialogTitle>
+                                            <DialogDescription className="font-body">Sample image of the issued certificate.</DialogDescription>
+                                          </DialogHeader>
+                                          <div
+                                            className="relative overflow-hidden mx-5 mb-5 rounded"
+                                            style={{ aspectRatio: "1 / 1.414", maxHeight: "calc(95vh - 6rem)" }}
+                                            onContextMenu={(e) => e.preventDefault()}
+                                          >
+                                            <img
+                                              src={`/${prog.certificate.certificate_sample}`}
+                                              alt="Sample Certificate"
+                                              draggable={false}
+                                              className="w-full h-full object-cover block select-none"
+                                              style={{ pointerEvents: "none", userSelect: "none" }}
+                                            />
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+                                              <p style={{ transform: "rotate(-45deg)", fontSize: "clamp(2rem,6vw,5rem)", opacity: 0.15, fontWeight: 900, whiteSpace: "nowrap", color: "red", userSelect: "none" }}>
+                                                SAMPLE CERTIFICATE
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </DialogContent>
+                                      </Dialog>
+                                    )}
                                   </div>
                                 )}
                               </div>

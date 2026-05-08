@@ -46,6 +46,7 @@ class VerifyController extends Controller
                         'issue_date'         => $sp->certificate->issue_date->format('Y-m-d'),
                         'level'              => $sp->certificate->level,
                         'status'             => $sp->certificate->status,
+                        'certificate_sample'  => $sp->certificate->certificate_sample,
                     ] : null,
                 ])->values()->all(),
             ];

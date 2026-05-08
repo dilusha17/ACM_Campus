@@ -80,7 +80,7 @@ const Avatar = ({ name }: { name: string }) => (
 
 const Dashboard = ({ stats, recentAdmissions, recentScholarships, recentContacts }: Props) => (
   <AdminLayout>
-    <div className="space-y-8 max-w-6xl">
+    <div className="space-y-8 max-w-7xl">
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>

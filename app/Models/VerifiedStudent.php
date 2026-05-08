@@ -8,20 +8,30 @@ class VerifiedStudent extends Model
 {
     protected $fillable = [
         'student_id',
+        'nic',
+        'passport',
+        'first_name',
+        'last_name',
         'full_name',
         'date_of_birth',
         'email',
+        'gender',
+        'nationality_id',
         'nationality',
         'phone_country_code',
         'phone',
         'address',
-        'admission_id',
         'image_path',
     ];
 
     public function admission()
     {
         return $this->belongsTo(Admission::class);
+    }
+
+    public function nationality()
+    {
+        return $this->belongsTo(\App\Models\Nationality::class);
     }
 
     public function studentPrograms()

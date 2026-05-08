@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('certificate_number')->unique();
             $table->date('issue_date');
             $table->enum('level', ['Degree', 'Diploma', 'Certificate', 'Master', 'PhD']);
+            $table->string('certificate_sample')->nullable();
             $table->enum('status', ['active', 'revoked'])->default('active');
             $table->json('metadata')->nullable();
             $table->timestamps();

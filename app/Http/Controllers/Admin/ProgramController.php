@@ -11,7 +11,7 @@ use Inertia\Inertia;
 
 class ProgramController extends Controller
 {
-    protected string $coverPhotoDirectory = 'program-covers';
+    protected string $coverPhotoDirectory = 'assets/program-covers';
 
     public function index(Request $request)
     {
@@ -81,23 +81,25 @@ class ProgramController extends Controller
     public function update(Request $request, Program $program)
     {
         $data = $request->validate([
-            'slug'        => 'required|string|max:100|unique:programs,slug,' . $program->id,
-            'title'       => 'required|string|max:255',
-            'level'       => 'required|in:Degree,Diploma,Certificate',
-            'duration'    => 'required|string|max:50',
-            'short'       => 'required|string|max:500',
-            'overview'    => 'required|string|max:5000',
-            'modules'     => 'nullable|array',
-            'modules.*'   => 'string|max:255',
-            'careers'     => 'nullable|array',
-            'careers.*'   => 'string|max:255',
-            'entry'       => 'nullable|array',
-            'entry.*'     => 'string|max:255',
-            'is_active'   => 'boolean',
-            'cover_photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
+            'slug'               => 'required|string|max:100|unique:programs,slug,' . $program->id,
+            'title'              => 'required|string|max:255',
+            'level'              => 'required|in:Degree,Diploma,Certificate',
+            'duration'           => 'required|string|max:50',
+            'short'              => 'required|string|max:500',
+            'overview'           => 'required|string|max:5000',
+            'modules'            => 'nullable|array',
+            'modules.*'          => 'string|max:255',
+            'careers'            => 'nullable|array',
+            'careers.*'          => 'string|max:255',
+            'entry'              => 'nullable|array',
+            'entry.*'            => 'string|max:255',
+            'is_active'          => 'boolean',
+            'cover_photo'        => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
+            'remove_cover_photo' => 'nullable|boolean',
         ]);
 
         if ($request->hasFile('cover_photo')) {
+            // Replace existing cover photo with the new upload
             if ($program->cover_photo && file_exists(public_path($program->cover_photo))) {
                 unlink(public_path($program->cover_photo));
             }
@@ -111,7 +113,18 @@ class ProgramController extends Controller
             $filename = Str::slug($data['slug']) . '_cover.' . $request->file('cover_photo')->getClientOriginalExtension();
             $request->file('cover_photo')->move($destinationDirectory, $filename);
             $data['cover_photo'] = $this->coverPhotoDirectory . '/' . $filename;
+        } elseif (!empty($data['remove_cover_photo'])) {
+            // User explicitly clicked the red X — delete and clear the photo
+            if ($program->cover_photo && file_exists(public_path($program->cover_photo))) {
+                unlink(public_path($program->cover_photo));
+            }
+            $data['cover_photo'] = null;
+        } else {
+            // No change to cover photo — preserve the existing value
+            unset($data['cover_photo']);
         }
+
+        unset($data['remove_cover_photo']);
 
         $program->update($data);
 

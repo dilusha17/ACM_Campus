@@ -1,7 +1,9 @@
 import { Link, router } from "@inertiajs/react";
 import AdminLayout from "@/layouts/AdminLayout";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Plus, Search, Pencil, Trash2, Download, Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import axios from "axios";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,6 +14,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const statusStyles: Record<string, string> = {
   active:    "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/80",
@@ -40,14 +49,23 @@ interface Student {
   student_programs: StudentProgram[];
 }
 
-interface Props {
-  students: { data: Student[]; links: any[]; meta: any };
-  filters: { status?: string; search?: string };
-  total_count: number;
+interface Program {
+  slug: string;
+  title: string;
 }
 
-const Index = ({ students, filters, total_count }: Props) => {
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+interface Props {
+  students: { data: Student[]; links: any[]; meta: any };
+  filters: { status?: string; search?: string; programme?: string };
+  total_count: number;
+  programs: Program[];
+}
+
+const Index = ({ students, filters, total_count, programs }: Props) => {
+  const [deleteId, setDeleteId]     = useState<number | null>(null);
+  const [importing, setImporting]   = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef                = useRef<HTMLInputElement>(null);
 
   const setFilter = (key: string, value: string) =>
     router.get("/admin/students", { ...filters, [key]: value || undefined }, { preserveState: true, replace: true });
@@ -59,21 +77,144 @@ const Index = ({ students, filters, total_count }: Props) => {
     }
   };
 
+  // ── Export ──────────────────────────────────────────────────────────────
+  const handleExport = () => {
+    const params = new URLSearchParams();
+    if (filters.search)    params.set("search", filters.search);
+    if (filters.status)    params.set("status", filters.status);
+    if (filters.programme) params.set("programme", filters.programme);
+    window.location.href = "/admin/students/export?" + params.toString();
+  };
+
+  // ── Import ──────────────────────────────────────────────────────────────
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    setImporting(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    let res;
+    try {
+      res = await axios.post<{
+        column_error?: string;
+        to_import?: Record<string, string>[];
+        to_update?: Record<string, string>[];
+        skipped?: number;
+      }>("/admin/students/import/check", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        (err?.response?.data?.errors
+          ? (Object.values(err.response.data.errors) as string[][]).flat().join("\n")
+          : null) ||
+        "Failed to process the file. Please try again.";
+      setImportError(msg);
+      setImporting(false);
+      return;
+    }
+
+    setImporting(false);
+
+    if (res.data.column_error) {
+      setImportError(res.data.column_error);
+      return;
+    }
+
+    const toImp    = res.data.to_import ?? [];
+    const toUpd    = res.data.to_update ?? [];
+    const skipped  = res.data.skipped ?? 0;
+
+    if (toImp.length === 0 && toUpd.length === 0) {
+      setImportError(
+        skipped > 0
+          ? `All ${skipped} row${skipped !== 1 ? "s" : ""} already exist in the system. Nothing to import.`
+          : "The file contains no importable data."
+      );
+      return;
+    }
+
+    doImport(toImp, toUpd, skipped);
+  };
+
+  const doImport = async (
+    rows: Record<string, string>[],
+    updateRows: Record<string, string>[],
+    skipped: number
+  ) => {
+    setImporting(true);
+    try {
+      const res = await axios.post<{ imported: number; updated: number }>(
+        "/admin/students/import",
+        { rows, update_rows: updateRows }
+      );
+      const parts: string[] = [];
+      if (res.data.imported > 0)
+        parts.push(`${res.data.imported} student${res.data.imported !== 1 ? "s" : ""} imported`);
+      if (res.data.updated > 0)
+        parts.push(`${res.data.updated} programme${res.data.updated !== 1 ? "s" : ""} added/updated for existing students`);
+      if (skipped > 0)
+        parts.push(`${skipped} row${skipped !== 1 ? "s" : ""} skipped (no changes)`);
+      toast.success(parts.join(", ") + ".");
+      router.reload();
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        (err?.response?.data?.errors
+          ? (Object.values(err.response.data.errors) as string[][]).flat().join("\n")
+          : null) ||
+        "Import failed. Please check the file and try again.";
+      setImportError(msg);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <AdminLayout>
-      <div className="space-y-6 max-w-6xl">
+      <div className="space-y-6 max-w-7xl">
         {/* Page header */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Verified Students</h1>
             <p className="text-gray-500 text-sm mt-1">{total_count} student{total_count !== 1 ? "s" : ""}</p>
           </div>
-          <Link
-            href="/admin/students/create"
-            className="inline-flex items-center gap-2 bg-[#1a3a5c] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 transition-colors shadow-sm shadow-[#1a3a5c]/20 shrink-0"
-          >
-            <Plus size={16} /> Add Student
-          </Link>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Import button */}
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              className="inline-flex items-center gap-2 border border-gray-200 text-gray-600 bg-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60"
+            >
+              <Upload size={15} />
+              {importing ? "Importing…" : "Import"}
+            </button>
+            {/* Export button */}
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center gap-2 border border-gray-200 text-gray-600 bg-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <Download size={15} /> Export
+            </button>
+            {/* Add Student */}
+            <Link
+              href="/admin/students/create"
+              className="inline-flex items-center gap-2 bg-[#1a3a5c] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 transition-colors shadow-sm shadow-[#1a3a5c]/20 shrink-0"
+            >
+              <Plus size={16} /> Add Student
+            </Link>
+          </div>
         </div>
 
         {/* Filters */}
@@ -85,11 +226,28 @@ const Index = ({ students, filters, total_count }: Props) => {
               className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
             />
           </div>
-          <select value={filters.status ?? ""} onChange={(e) => setFilter("status", e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20">
-            <option value="">All statuses</option>
-            {["active","graduated","suspended"].map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
-          </select>
+          <Select value={filters.status ?? "all"} onValueChange={(v) => setFilter("status", v === "all" ? "" : v)}>
+            <SelectTrigger className="w-40 rounded-xl border-gray-200 text-sm">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="graduated">Graduated</SelectItem>
+              <SelectItem value="suspended">Suspended</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filters.programme ?? "all"} onValueChange={(v) => setFilter("programme", v === "all" ? "" : v)}>
+            <SelectTrigger className="w-48 rounded-xl border-gray-200 text-sm">
+              <SelectValue placeholder="All programmes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All programmes</SelectItem>
+              {programs.map((p) => (
+                <SelectItem key={p.slug} value={p.slug}>{p.title}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Table */}
@@ -201,6 +359,21 @@ const Index = ({ students, filters, total_count }: Props) => {
             >
               Remove
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Import Error AlertDialog */}
+      <AlertDialog open={importError !== null} onOpenChange={(open) => !open && setImportError(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Import Error</AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-wrap">
+              {importError}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setImportError(null)}>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

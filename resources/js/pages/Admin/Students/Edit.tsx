@@ -3,6 +3,7 @@ import AdminLayout from "@/layouts/AdminLayout";
 import { ChevronLeft, Pencil, Plus, Trash2, Award, X, Check } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -14,7 +15,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Combobox } from "@/components/ui/combobox";
 import { Progress } from "@/components/ui/progress";
 import { ImageCropper } from "@/components/ui/image-cropper";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { countryCodeOptions } from "@/data/countryCodes";
 import {
   AlertDialog,
@@ -71,10 +73,16 @@ interface StudentProgramRow {
 interface Student {
   id: number;
   student_id: string;
+  nic: string | null;
+  passport: string | null;
+  first_name: string | null;
+  last_name: string | null;
   full_name: string;
   date_of_birth: string | null;
   email: string;
+  nationality_id: number | null;
   nationality: string | null;
+  gender: string;
   phone_country_code: string | null;
   phone: string | null;
   address: string | null;
@@ -94,6 +102,11 @@ interface Program {
   slug: string;
   title: string;
   level: string;
+}
+
+interface Nationality {
+  id: number;
+  name: string;
 }
 
 const statusStyles: Record<string, string> = {
@@ -117,14 +130,12 @@ const ProgramEditRow = ({
   studentId,
   programs,
   admissions,
-  availableCerts,
   onClose,
 }: {
   sp: StudentProgramRow;
   studentId: number;
   programs: Program[];
   admissions: Admission[];
-  availableCerts: AvailableCert[];
   onClose: () => void;
 }) => {
   const { data, setData, patch, processing, errors } = useForm({
@@ -137,13 +148,25 @@ const ProgramEditRow = ({
     certificate_id:  sp.certificate ? String(sp.certificate.id) : "",
   });
 
-  // Merge the currently-assigned cert into the options so it shows as selected
-  const certOptions: AvailableCert[] = sp.certificate
-    ? [
-        { id: sp.certificate.id, certificate_number: sp.certificate.certificate_number, program_slug: sp.program_slug },
-        ...availableCerts.filter((c) => c.id !== sp.certificate!.id),
-      ]
-    : availableCerts;
+  const [fetchedCerts, setFetchedCerts] = useState<AvailableCert[]>([]);
+  const [certsLoading, setCertsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!data.program_slug) { setFetchedCerts([]); return; }
+    setCertsLoading(true);
+    axios.get<AvailableCert[]>("/admin/certificates/available", { params: { programme: data.program_slug } })
+      .then((res) => setFetchedCerts(res.data))
+      .catch(() => setFetchedCerts([]))
+      .finally(() => setCertsLoading(false));
+  }, [data.program_slug]);
+
+  // Prepend the currently-assigned cert when still on the same programme (it won't appear in fetch result)
+  const certOptions: AvailableCert[] = [
+    ...(sp.certificate && data.program_slug === sp.program_slug
+      ? [{ id: sp.certificate.id, certificate_number: sp.certificate.certificate_number, program_slug: sp.program_slug }]
+      : []),
+    ...fetchedCerts.filter((c) => !sp.certificate || c.id !== sp.certificate.id),
+  ];
 
   const programOptions = programs.map((p) => ({ value: p.slug, label: p.title, sub: p.level }));
   const admissionOptions = [
@@ -162,17 +185,8 @@ const ProgramEditRow = ({
         <Combobox
           options={programOptions}
           value={data.program_slug}
-          onChange={(v) => setData("program_slug", v)}
+          onChange={(v) => setData((prev) => ({ ...prev, program_slug: v, certificate_id: "" }))}
           placeholder="Select programme..."
-          searchPlaceholder="Search..."
-        />
-      </Field>
-      <Field label="Linked Admission" error={errors.admission_id}>
-        <Combobox
-          options={admissionOptions}
-          value={data.admission_id}
-          onChange={(v) => setData("admission_id", v)}
-          placeholder="None"
           searchPlaceholder="Search..."
         />
       </Field>
@@ -256,13 +270,11 @@ const AddProgramForm = ({
   studentId,
   programs,
   admissions,
-  available_certificates,
   onClose,
 }: {
   studentId: number;
   programs: Program[];
   admissions: Admission[];
-  available_certificates: Record<string, AvailableCert[]>;
   onClose: () => void;
 }) => {
   const { data, setData, post, processing, errors, reset } = useForm({
@@ -275,9 +287,19 @@ const AddProgramForm = ({
     certificate_id:  "",
   });
 
-  const certsForProgram = data.program_slug
-    ? (available_certificates[data.program_slug] ?? [])
-    : [];
+  const [fetchedCerts, setFetchedCerts] = useState<AvailableCert[]>([]);
+  const [certsLoading, setCertsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!data.program_slug) { setFetchedCerts([]); return; }
+    setCertsLoading(true);
+    axios.get<AvailableCert[]>("/admin/certificates/available", { params: { programme: data.program_slug } })
+      .then((res) => setFetchedCerts(res.data))
+      .catch(() => setFetchedCerts([]))
+      .finally(() => setCertsLoading(false));
+  }, [data.program_slug]);
+
+  const certsForProgram = [...fetchedCerts].sort((a, b) => b.certificate_number.localeCompare(a.certificate_number));
 
   const programOptions = programs.map((p) => ({ value: p.slug, label: p.title, sub: p.level }));
   const admissionOptions = [
@@ -300,17 +322,8 @@ const AddProgramForm = ({
           <Combobox
             options={programOptions}
             value={data.program_slug}
-            onChange={(v) => setData("program_slug", v)}
+            onChange={(v) => setData((prev) => ({ ...prev, program_slug: v, certificate_id: "" }))}
             placeholder="Select programme..."
-            searchPlaceholder="Search..."
-          />
-        </Field>
-        <Field label="Linked Admission" error={errors.admission_id}>
-          <Combobox
-            options={admissionOptions}
-            value={data.admission_id}
-            onChange={(v) => setData("admission_id", v)}
-            placeholder="None"
             searchPlaceholder="Search..."
           />
         </Field>
@@ -343,11 +356,12 @@ const AddProgramForm = ({
         {data.status === "graduated" && (
           <Field label="Certificate" error={errors.certificate_id}>
             <Select
+              disabled={certsLoading}
               value={data.certificate_id || "__none__"}
               onValueChange={(v) => setData("certificate_id", v === "__none__" ? "" : v)}
             >
               <SelectTrigger className="rounded-xl border-gray-200">
-                <SelectValue placeholder="No certificate" />
+                <SelectValue placeholder={certsLoading ? "Loading…" : "No certificate"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">No certificate</SelectItem>
@@ -394,11 +408,13 @@ const Edit = ({
   student,
   admissions,
   programs,
+  nationalities,
   available_certificates,
 }: {
   student: Student;
   admissions: Admission[];
   programs: Program[];
+  nationalities: Nationality[];
   available_certificates: Record<string, AvailableCert[]>;
 }) => {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -411,10 +427,15 @@ const Edit = ({
   const { data, setData, post, processing, errors } = useForm<{
     _method: string;
     student_id: string;
+    id_type: string;
+    id_number: string;
+    first_name: string;
+    last_name: string;
     full_name: string;
     date_of_birth: string;
     email: string;
-    nationality: string;
+    nationality_id: string;
+    gender: string;
     phone_country_code: string;
     phone: string;
     address: string;
@@ -422,10 +443,15 @@ const Edit = ({
   }>({
     _method:            "PUT",
     student_id:         student.student_id,
+    id_type:            student.nic ? "NIC" : "Passport",
+    id_number:          student.nic ?? student.passport ?? "",
+    first_name:         student.first_name ?? "",
+    last_name:          student.last_name ?? "",
     full_name:          student.full_name,
     date_of_birth:      student.date_of_birth ?? "",
     email:              student.email,
-    nationality:        student.nationality ?? "",
+    nationality_id:     student.nationality_id ? String(student.nationality_id) : "",
+    gender:             student.gender ?? "",
     phone_country_code: student.phone_country_code ?? "",
     phone:              student.phone ?? "",
     address:            student.address ?? "",
@@ -489,14 +515,58 @@ const Edit = ({
           <div className="p-6 grid sm:grid-cols-2 gap-5">
             <Field label="Student ID" error={errors.student_id}>
               <Input
-                required
+                readOnly
                 value={data.student_id}
-                onChange={(e) => setData("student_id", e.target.value)}
+                className="rounded-xl border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
+              />
+            </Field>
+
+            <Field label="NIC / Passport No. *" error={errors.id_number}>
+              <div className="flex gap-2">
+                <Select
+                  value={data.id_type}
+                  onValueChange={(v) => setData("id_type", v)}
+                >
+                  <SelectTrigger className="rounded-xl border-gray-200 w-36 shrink-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NIC">NIC</SelectItem>
+                    <SelectItem value="Passport">Passport</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  required
+                  value={data.id_number}
+                  onChange={(e) => setData("id_number", e.target.value)}
+                  placeholder={data.id_type === "NIC" ? "e.g. 199012345678" : "e.g. N1234567"}
+                  maxLength={20}
+                  className="rounded-xl border-gray-200 flex-1"
+                />
+              </div>
+            </Field>
+
+            <Field label="First Name *" error={errors.first_name}>
+              <Input
+                required
+                value={data.first_name}
+                onChange={(e) => setData("first_name", e.target.value)}
+                placeholder="Jane"
                 className="rounded-xl border-gray-200"
               />
             </Field>
 
-            <Field label="Full Name" error={errors.full_name}>
+            <Field label="Last Name *" error={errors.last_name}>
+              <Input
+                required
+                value={data.last_name}
+                onChange={(e) => setData("last_name", e.target.value)}
+                placeholder="Doe"
+                className="rounded-xl border-gray-200"
+              />
+            </Field>
+
+            <Field label="Full Name *" error={errors.full_name}>
               <Input
                 required
                 value={data.full_name}
@@ -505,7 +575,7 @@ const Edit = ({
               />
             </Field>
 
-            <Field label="Email" error={errors.email}>
+            <Field label="Email *" error={errors.email}>
               <Input
                 type="email"
                 required
@@ -528,14 +598,38 @@ const Edit = ({
               />
             </Field>
 
-            <Field label="Nationality" error={errors.nationality}>
-              <Input
-                required
-                value={data.nationality}
-                onChange={(e) => setData("nationality", e.target.value)}
-                placeholder="e.g. British"
-                className="rounded-xl border-gray-200"
-              />
+            <Field label="Nationality *" error={errors.nationality_id}>
+              <Select
+                value={data.nationality_id}
+                onValueChange={(v) => setData("nationality_id", v)}
+              >
+                <SelectTrigger className="rounded-xl border-gray-200">
+                  <SelectValue placeholder="Select nationality…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {nationalities.map((n) => (
+                    <SelectItem key={n.id} value={String(n.id)}>
+                      {n.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field label="Gender *" error={errors.gender}>
+              <Select
+                value={data.gender}
+                onValueChange={(v) => setData("gender", v)}
+              >
+                <SelectTrigger className="rounded-xl border-gray-200">
+                  <SelectValue placeholder="Select gender…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="not_stated">Prefer Not to Say</SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
 
             <div className="sm:col-span-2 space-y-1.5">
@@ -556,7 +650,7 @@ const Edit = ({
                   required
                   value={data.phone}
                   onChange={(e) => setData("phone", e.target.value)}
-                  placeholder="Phone number"
+                  placeholder="9 or 10 digit number"
                   className="rounded-xl border-gray-200 flex-1"
                 />
               </div>
@@ -565,12 +659,13 @@ const Edit = ({
             </div>
 
             <div className="sm:col-span-2">
-              <Field label="Address" error={errors.address}>
-                <Input
+              <Field label="Address *" error={errors.address}>
+                <Textarea
+                  required
                   value={data.address}
                   onChange={(e) => setData("address", e.target.value)}
                   placeholder="Full postal address"
-                  className="rounded-xl border-gray-200"
+                  className="rounded-xl border-gray-200 min-h-[96px]"
                 />
               </Field>
             </div>
@@ -740,7 +835,6 @@ const Edit = ({
                     studentId={student.id}
                     programs={programs}
                     admissions={admissions}
-                    availableCerts={available_certificates[sp.program_slug] ?? []}
                     onClose={() => setEditingSpId(null)}
                   />
                 )}
@@ -754,7 +848,6 @@ const Edit = ({
               studentId={student.id}
               programs={programs}
               admissions={admissions}
-              available_certificates={available_certificates}
               onClose={() => setShowAddProgram(false)}
             />
           )}

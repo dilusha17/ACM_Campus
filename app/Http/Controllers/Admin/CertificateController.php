@@ -89,9 +89,9 @@ class CertificateController extends Controller
             'year'         => 'required|digits:4',
         ]);
 
-        $slug   = strtoupper(str_replace('-', '', $request->program_slug));
+        $slug   = strtolower($request->program_slug);
         $year   = $request->year;
-        $prefix = 'ACM-' . $year . '-' . $slug . '-';
+        $prefix = 'acm-' . $year . '-' . $slug . '-';
 
         $seq = Certificate::where('certificate_number', 'like', $prefix . '%')->count() + 1;
 
@@ -100,17 +100,31 @@ class CertificateController extends Controller
         ]);
     }
 
+    public function available(Request $request)
+    {
+        $request->validate(['programme' => 'required|string']);
+
+        $certs = Certificate::whereDoesntHave('studentProgram')
+            ->where('status', 'active')
+            ->where('program_slug', $request->programme)
+            ->orderByDesc('certificate_number')
+            ->get(['id', 'certificate_number', 'program_slug']);
+
+        return response()->json($certs);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
             'program_slug'   => 'required|exists:programs,slug',
             'graduated_year' => 'required|digits:4|integer|min:2000|max:' . (date('Y') + 1),
             'level'          => 'required|in:Degree,Diploma,Certificate,Master,PhD',
+            'pdf'            => 'nullable|file|mimes:jpg,jpeg,png,webp|max:20480',
         ]);
 
-        $slug   = strtoupper(str_replace('-', '', $data['program_slug']));
+        $slug   = strtolower($data['program_slug']);
         $year   = $data['graduated_year'];
-        $prefix = 'ACM-' . $year . '-' . $slug . '-';
+        $prefix = 'acm-' . $year . '-' . $slug . '-';
 
         $certNumber = null;
 
@@ -134,6 +148,19 @@ class CertificateController extends Controller
                 'status'             => 'active',
             ]);
         });
+
+        // Store uploaded sample PDF if provided
+        if ($request->hasFile('pdf')) {
+            $programSlug = $data['program_slug'];
+            $dir = public_path('sample_certificates/' . $programSlug);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+            $ext = $request->file('pdf')->getClientOriginalExtension();
+            $request->file('pdf')->move($dir, $certNumber . '.' . $ext);
+            Certificate::where('certificate_number', $certNumber)
+                ->update(['certificate_sample' => 'sample_certificates/' . $programSlug . '/' . $certNumber . '.' . $ext]);
+        }
 
         return redirect()->route('admin.certificates.create')
             ->with('success', 'Certificate created: ' . $certNumber)

@@ -79,7 +79,14 @@ Route::prefix('admin')->middleware('admin.auth')->name('admin.')->group(function
 
     Route::resource('programs', Admin\ProgramController::class)->names('programs');
     Route::get('/certificates/generate-number', [Admin\CertificateController::class, 'generateNumber'])->name('certificates.generate-number');
+    Route::get('/certificates/available', [Admin\CertificateController::class, 'available'])->name('certificates.available');
     Route::resource('certificates', Admin\CertificateController::class)->names('certificates');
+
+    // Student import/export (must be before resource to avoid route-model binding conflict)
+    Route::get('/students/export', [Admin\StudentController::class, 'export'])->name('students.export');
+    Route::post('/students/import/check', [Admin\StudentController::class, 'importCheck'])->name('students.import.check');
+    Route::post('/students/import', [Admin\StudentController::class, 'importConfirm'])->name('students.import');
+
     Route::resource('students', Admin\StudentController::class)->names('students');
 
     // Nested student programme enrollment routes
