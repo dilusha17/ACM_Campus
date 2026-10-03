@@ -58,7 +58,7 @@ const SidebarContent = ({ url, onClose }: { url: string; onClose?: () => void })
             onClick={onClose}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group ${
               active
-                ? "bg-white/15 text-white shadow-sm"
+                ? "bg-white/15 text-white shadow-xs"
                 : "text-white/60 hover:text-white hover:bg-white/8"
             }`}
           >
@@ -109,7 +109,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Main content area */}
       <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
         {/* Top header */}
-        <header className="sticky top-0 z-30 h-14 bg-white border-b border-gray-100 shadow-sm flex items-center px-4 md:px-6 gap-4">
+        <header className="sticky top-0 z-30 h-14 bg-white border-b border-gray-100 shadow-xs flex items-center px-4 md:px-6 gap-4">
           <button
             onClick={() => setMobileOpen(true)}
             className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
@@ -119,7 +119,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-[#1a3a5c] flex items-center justify-center shadow-sm">
+            <div className="w-7 h-7 rounded-full bg-[#1a3a5c] flex items-center justify-center shadow-xs">
               <span className="text-white text-xs font-semibold select-none">A</span>
             </div>
             <span className="hidden sm:block text-sm font-medium text-gray-700">Admin</span>

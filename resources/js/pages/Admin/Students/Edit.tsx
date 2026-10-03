@@ -697,7 +697,7 @@ const Edit = ({
             <button
               type="submit"
               disabled={processing}
-              className="bg-[#1a3a5c] text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 disabled:opacity-60 transition-colors shadow-sm"
+              className="bg-[#1a3a5c] text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 disabled:opacity-60 transition-colors shadow-xs"
             >
               {processing ? "Saving..." : "Save Changes"}
             </button>
@@ -776,7 +776,7 @@ const Edit = ({
                               onChange={(e) =>
                                 setAssignCertMap((prev) => ({ ...prev, [sp.id]: e.target.value }))
                               }
-                              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+                              className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 text-gray-600 focus:outline-hidden focus:ring-2 focus:ring-[#1a3a5c]/20"
                             >
                               <option value="">Select certificate…</option>
                               {(available_certificates[String(sp.program_id)] ?? []).map((cert) => (

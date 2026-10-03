@@ -26,7 +26,7 @@ const Navbar = () => {
           <img
             src={logo}
             alt="ACM Campus"
-            className="h-12 md:h-[5rem] w-auto transition-all"
+            className="h-12 md:h-20 w-auto transition-all"
           />
         </Link>
 

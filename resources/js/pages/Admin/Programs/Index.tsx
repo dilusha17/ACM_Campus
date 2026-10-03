@@ -85,7 +85,7 @@ const Index = ({ programs, filters }: Props) => {
           </div>
           <Link
             href="/admin/programs/create"
-            className="flex items-center gap-2 bg-[#1a3a5c] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 transition-colors shadow-sm"
+            className="flex items-center gap-2 bg-[#1a3a5c] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 transition-colors shadow-xs"
           >
             <Plus size={16} />
             Add Programme

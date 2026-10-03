@@ -80,7 +80,7 @@ const Footer = () => {
           <h4 className="font-display font-semibold text-lg mb-6 text-center">Our Partners & Recognitions</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
             {partners.map((partner) => (
-              <div key={partner.src} className="bg-white rounded-xl aspect-[3/2] flex items-center justify-center p-3">
+              <div key={partner.src} className="bg-white rounded-xl aspect-3/2 flex items-center justify-center p-3">
                 <img
                   src={partner.src}
                   alt={partner.name}

@@ -259,10 +259,10 @@ const Verify = ({ result, searched, query }: Props) => {
                           <img
                             src={`/${result.image_path}`}
                             alt={result.full_name}
-                            className="w-[7.5rem] h-[7.5rem] rounded-full object-cover ring-2 ring-border"
+                            className="w-30 h-30 rounded-full object-cover ring-2 ring-border"
                           />
                         ) : (
-                          <div className="w-[7.5rem] h-[7.5rem] rounded-full bg-secondary/10 flex items-center justify-center text-secondary font-display text-3xl font-bold">
+                          <div className="w-30 h-30 rounded-full bg-secondary/10 flex items-center justify-center text-secondary font-display text-3xl font-bold">
                             {result.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
                           </div>
                         )}
@@ -333,7 +333,7 @@ const Verify = ({ result, searched, query }: Props) => {
                                           <DialogTitle className="font-display">Certificate Preview</DialogTitle>
                                           <DialogDescription className="font-body">Stylised representation of the issued credential.</DialogDescription>
                                         </DialogHeader>
-                                        <div className="relative border-2 border-secondary/30 rounded-lg p-8 bg-gradient-to-br from-background to-muted/40 text-center space-y-4 overflow-hidden">
+                                        <div className="relative border-2 border-secondary/30 rounded-lg p-8 bg-linear-to-br from-background to-muted/40 text-center space-y-4 overflow-hidden">
                                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden rounded-lg">
                                             <p style={{ transform: "rotate(-45deg)", fontSize: "3.5rem", opacity: 0.07, fontWeight: 900, whiteSpace: "nowrap", color: "#1a3a5c", userSelect: "none" }}>
                                               E-CERTIFICATE

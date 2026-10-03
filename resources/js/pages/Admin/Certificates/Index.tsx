@@ -88,7 +88,7 @@ const Index = ({ certificates, filters }: Props) => {
           </div>
           <Link
             href="/admin/certificates/create"
-            className="flex items-center gap-2 bg-[#1a3a5c] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 transition-colors shadow-sm"
+            className="flex items-center gap-2 bg-[#1a3a5c] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 transition-colors shadow-xs"
           >
             <Plus size={16} />
             Create Certificate
@@ -107,7 +107,7 @@ const Index = ({ certificates, filters }: Props) => {
                 setSearch(e.target.value);
                 setFilter("search", e.target.value);
               }}
-              className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#1a3a5c]/20"
             />
           </div>
           <Select value={filters?.status ?? "all"} onValueChange={(v) => setFilter("status", v === "all" ? "" : v)}>
@@ -212,7 +212,7 @@ const Index = ({ certificates, filters }: Props) => {
                 preserveState
                 className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   link.active
-                    ? "bg-[#1a3a5c] text-white shadow-sm"
+                    ? "bg-[#1a3a5c] text-white shadow-xs"
                     : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
                 } ${!link.url ? "opacity-40 pointer-events-none" : ""}`}
                 dangerouslySetInnerHTML={{ __html: link.label }}

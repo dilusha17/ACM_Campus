@@ -212,7 +212,7 @@ const Create = ({
               type="button"
               onClick={handleGenerate}
               disabled={processing || !data.program_id}
-              className="inline-flex items-center gap-2 bg-[#1a3a5c] text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 disabled:opacity-50 transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 bg-[#1a3a5c] text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 disabled:opacity-50 transition-colors shadow-xs"
             >
               {processing ? (
                 <RefreshCw size={14} className="animate-spin" />

@@ -195,7 +195,7 @@ const Index = ({ students, filters, total_count, programs }: Props) => {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={importing}
-              className="inline-flex items-center gap-2 border border-gray-200 text-gray-600 bg-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60"
+              className="inline-flex items-center gap-2 border border-gray-200 text-gray-600 bg-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors shadow-xs disabled:opacity-60"
             >
               <Upload size={15} />
               {importing ? "Importing…" : "Import"}
@@ -203,14 +203,14 @@ const Index = ({ students, filters, total_count, programs }: Props) => {
             {/* Export button */}
             <button
               onClick={handleExport}
-              className="inline-flex items-center gap-2 border border-gray-200 text-gray-600 bg-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 border border-gray-200 text-gray-600 bg-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors shadow-xs"
             >
               <Download size={15} /> Export
             </button>
             {/* Add Student */}
             <Link
               href="/admin/students/create"
-              className="inline-flex items-center gap-2 bg-[#1a3a5c] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 transition-colors shadow-sm shadow-[#1a3a5c]/20 shrink-0"
+              className="inline-flex items-center gap-2 bg-[#1a3a5c] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 transition-colors shadow-xs shadow-[#1a3a5c]/20 shrink-0"
             >
               <Plus size={16} /> Add Student
             </Link>
@@ -223,7 +223,7 @@ const Index = ({ students, filters, total_count, programs }: Props) => {
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input type="text" placeholder="Search name, ID or email…" defaultValue={filters.search}
               onChange={(e) => setFilter("search", e.target.value)}
-              className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#1a3a5c]/20"
             />
           </div>
           <Select value={filters.status ?? "all"} onValueChange={(v) => setFilter("status", v === "all" ? "" : v)}>
@@ -333,7 +333,7 @@ const Index = ({ students, filters, total_count, programs }: Props) => {
             {students.links.map((link: any, i: number) => (
               <Link key={i} href={link.url ?? "#"} preserveState
                 className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  link.active ? "bg-[#1a3a5c] text-white shadow-sm" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  link.active ? "bg-[#1a3a5c] text-white shadow-xs" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
                 } ${!link.url ? "opacity-40 pointer-events-none" : ""}`}
                 dangerouslySetInnerHTML={{ __html: link.label }}
               />
