@@ -1,6 +1,7 @@
 export type ProgramLevel = "Degree" | "Diploma" | "Certificate";
 
 export interface ProgramOption {
+  id: number;
   slug: string;
   title: string;
   level: ProgramLevel;

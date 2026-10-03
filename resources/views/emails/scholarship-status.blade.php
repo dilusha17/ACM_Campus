@@ -8,12 +8,12 @@
     <p>Dear {{ $application->full_name }},</p>
 
     @if($newStatus === 'reviewed')
-      <p>We are writing to let you know that your <strong>{{ $application->scheme }}</strong> scholarship application for the <strong>{{ $application->program_slug }}</strong> programme is currently <strong>under review</strong> by our scholarships committee.</p>
+      <p>We are writing to let you know that your <strong>{{ $application->scheme }}</strong> scholarship application for the <strong>{{ $application->program_title ?? $application->program_slug }}</strong> programme is currently <strong>under review</strong> by our scholarships committee.</p>
       <span class="badge badge-reviewed">Under Review</span>
       <p>We will notify you of our decision as soon as the review is complete.</p>
 
     @elseif($newStatus === 'approved')
-      <p>We are thrilled to inform you that your <strong>{{ $application->scheme }}</strong> scholarship application for the <strong>{{ $application->program_slug }}</strong> programme has been <strong>approved</strong>!</p>
+      <p>We are thrilled to inform you that your <strong>{{ $application->scheme }}</strong> scholarship application for the <strong>{{ $application->program_title ?? $application->program_slug }}</strong> programme has been <strong>approved</strong>!</p>
       <span class="badge badge-approved">Approved</span>
       <p>A member of our team will be in touch shortly to discuss next steps and the formal scholarship award letter.</p>
       <p>Congratulations, and welcome to ACM Campus!</p>

@@ -6,7 +6,7 @@
   <div class="header"><h1>Scholarship Application Received</h1></div>
   <div class="body">
     <p>Dear {{ $application->full_name }},</p>
-    <p>Thank you for applying for the <strong>{{ $application->scheme }}</strong> Scholarship at <strong>Ashuvedya Complementary Medicine Campus</strong>. Your application for the <strong>{{ $application->program_slug }}</strong> programme has been received and is under review.</p>
+    <p>Thank you for applying for the <strong>{{ $application->scheme }}</strong> Scholarship at <strong>Ashuvedya Complementary Medicine Campus</strong>. Your application for the <strong>{{ $application->program_title ?? $application->program_slug }}</strong> programme has been received and is under review.</p>
     <p><strong>What happens next?</strong></p>
     <ul>
       <li>Our scholarships committee reviews applications on a monthly basis.</li>

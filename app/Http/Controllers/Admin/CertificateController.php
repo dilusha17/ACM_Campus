@@ -71,6 +71,7 @@ class CertificateController extends Controller
                 ->get()
                 ->map(fn ($c) => [
                     'id'                 => $c->id,
+                    'program_id'         => $c->program_id,
                     'certificate_number' => $c->certificate_number,
                     'program_slug'       => $c->program_slug,
                     'program_title'      => $c->program?->title ?? $c->program_slug,
@@ -85,11 +86,12 @@ class CertificateController extends Controller
     public function generateNumber(Request $request)
     {
         $request->validate([
-            'program_slug' => 'required|string',
+            'program_id'   => 'required|exists:programs,id',
             'year'         => 'required|digits:4',
         ]);
 
-        $slug   = strtolower($request->program_slug);
+        $program = Program::findOrFail($request->program_id);
+        $slug   = strtolower($program->slug);
         $year   = $request->year;
         $prefix = 'acm-' . $year . '-' . $slug . '-';
 
@@ -102,13 +104,13 @@ class CertificateController extends Controller
 
     public function available(Request $request)
     {
-        $request->validate(['programme' => 'required|string']);
+        $request->validate(['programme' => 'required|integer|exists:programs,id']);
 
         $certs = Certificate::whereDoesntHave('studentProgram')
             ->where('status', 'active')
-            ->where('program_slug', $request->programme)
+            ->where('program_id', $request->programme)
             ->orderByDesc('certificate_number')
-            ->get(['id', 'certificate_number', 'program_slug']);
+            ->get(['id', 'certificate_number', 'program_id']);
 
         return response()->json($certs);
     }
@@ -116,13 +118,14 @@ class CertificateController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'program_slug'   => 'required|exists:programs,slug',
+            'program_id'     => 'required|exists:programs,id',
             'graduated_year' => 'required|digits:4|integer|min:2000|max:' . (date('Y') + 1),
             'level'          => 'required|in:Degree,Diploma,Certificate,Master,PhD',
             'pdf'            => 'nullable|file|mimes:jpg,jpeg,png,webp|max:20480',
         ]);
 
-        $slug   = strtolower($data['program_slug']);
+        $program = Program::findOrFail($data['program_id']);
+        $slug   = strtolower($program->slug);
         $year   = $data['graduated_year'];
         $prefix = 'acm-' . $year . '-' . $slug . '-';
 
@@ -141,7 +144,7 @@ class CertificateController extends Controller
             }
 
             Certificate::create([
-                'program_slug'       => $data['program_slug'],
+                'program_id'         => $data['program_id'],
                 'certificate_number' => $certNumber,
                 'issue_date'         => now()->toDateString(),
                 'level'              => $data['level'],
@@ -151,7 +154,7 @@ class CertificateController extends Controller
 
         // Store uploaded sample PDF if provided
         if ($request->hasFile('pdf')) {
-            $programSlug = $data['program_slug'];
+            $programSlug = $program->slug;
             $dir = public_path('sample_certificates/' . $programSlug);
             if (!is_dir($dir)) {
                 mkdir($dir, 0755, true);

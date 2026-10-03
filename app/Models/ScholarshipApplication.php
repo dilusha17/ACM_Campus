@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class ScholarshipApplication extends Model
 {
+    protected $appends = ['program_slug', 'program_title'];
+
     protected $fillable = [
         'full_name',
         'email',
-        'program_slug',
+        'program_id',
         'scheme',
         'annual_household_income',
         'motivation_statement',
@@ -19,4 +21,19 @@ class ScholarshipApplication extends Model
         'referee2_email',
         'status',
     ];
+
+    public function program()
+    {
+        return $this->belongsTo(Program::class);
+    }
+
+    public function getProgramSlugAttribute(): ?string
+    {
+        return $this->program?->slug;
+    }
+
+    public function getProgramTitleAttribute(): ?string
+    {
+        return $this->program?->title;
+    }
 }

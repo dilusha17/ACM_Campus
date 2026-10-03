@@ -1,6 +1,11 @@
 import { Link, router, useForm } from "@inertiajs/react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { ChevronLeft, UserPlus, ChevronDown, ChevronUp } from "lucide-react";
+import VerifiedStudentForm, {
+  AvailableCertificate,
+  VerifiedStudentNationality,
+  VerifiedStudentProgram,
+} from "@/components/admin/VerifiedStudentForm";
 import {
   Select,
   SelectContent,
@@ -8,12 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Input } from "@/components/ui/input";
-import { Combobox } from "@/components/ui/combobox";
-import { ImageCropper } from "@/components/ui/image-cropper";
 import { useState } from "react";
-import { countryCodeOptions } from "@/data/countryCodes";
 
 const statusStyles: Record<string, string> = {
   pending:  "bg-amber-50 text-amber-700 ring-1 ring-amber-200/80",
@@ -23,10 +23,18 @@ const statusStyles: Record<string, string> = {
 };
 
 interface Admission {
-  id: number; full_name: string; email: string; phone: string; nationality: string;
-  program_slug: string; education_history: string; english_qualifications: string | null;
+  id: number; full_name: string; email: string; phone: string; phone_country_code: string | null; nationality: string;
+  nationality_id: number | null; program_id: number; program_title: string | null; education_history: string; english_qualifications: string | null;
   declaration_accepted: boolean; status: string; created_at: string;
 }
+
+const splitFullName = (fullName: string) => {
+  const [firstName = "", ...rest] = fullName.trim().split(/\s+/);
+  return {
+    first_name: firstName,
+    last_name: rest.join(" "),
+  };
+};
 
 const Field = ({ label, value }: { label: string; value: string | boolean }) => (
   <div>
@@ -35,47 +43,22 @@ const Field = ({ label, value }: { label: string; value: string | boolean }) => 
   </div>
 );
 
-const Show = ({ admission }: { admission: Admission }) => {
+const Show = ({
+  admission,
+  nationalities,
+  programs,
+  next_student_id,
+  available_certificates,
+}: {
+  admission: Admission;
+  nationalities: VerifiedStudentNationality[];
+  programs: VerifiedStudentProgram[];
+  next_student_id: string;
+  available_certificates: Record<string, AvailableCertificate[]>;
+}) => {
   const { data, setData, patch, processing } = useForm({ status: admission.status });
   const [showStudentForm, setShowStudentForm] = useState(false);
-
-  const studentForm = useForm<{
-    student_id: string;
-    full_name: string;
-    date_of_birth: string;
-    email: string;
-    nationality: string;
-    phone_country_code: string;
-    phone: string;
-    address: string;
-    program_slug: string;
-    admission_id: number;
-    enrollment_date: string;
-    status: string;
-    image: File | null;
-  }>({
-    student_id:         "",
-    full_name:          admission.full_name,
-    date_of_birth:      "",
-    email:              admission.email,
-    nationality:        admission.nationality,
-    phone_country_code: "",
-    phone:              admission.phone,
-    address:            "",
-    program_slug:       admission.program_slug,
-    admission_id:       admission.id,
-    enrollment_date:    "",
-    status:             "active",
-    image:              null,
-  });
-
-  const parseDate = (s: string) => (s ? new Date(s.slice(0, 10) + "T00:00:00") : undefined);
-  const formatDate = (d: Date | undefined) => d ? d.toISOString().split("T")[0] : "";
-
-  const submitStudent = (e: React.FormEvent) => {
-    e.preventDefault();
-    studentForm.post("/admin/students", { forceFormData: true });
-  };
+  const { first_name, last_name } = splitFullName(admission.full_name);
 
   const updateStatus = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,9 +95,9 @@ const Show = ({ admission }: { admission: Admission }) => {
           <dl className="grid sm:grid-cols-2 gap-5 p-6">
             <Field label="Full Name" value={admission.full_name} />
             <Field label="Email" value={admission.email} />
-            <Field label="Phone" value={admission.phone} />
+            <Field label="Phone" value={`${admission.phone_country_code ?? ""} ${admission.phone}`.trim()} />
             <Field label="Nationality" value={admission.nationality} />
-            <Field label="Programme" value={admission.program_slug} />
+            <Field label="Programme" value={admission.program_title ?? "—"} />
             <Field label="Submitted" value={new Date(admission.created_at).toLocaleDateString()} />
             <div className="sm:col-span-2">
               <Field label="Education History" value={admission.education_history} />
@@ -172,133 +155,32 @@ const Show = ({ admission }: { admission: Admission }) => {
             </button>
 
             {showStudentForm && (
-              <form onSubmit={submitStudent} className="px-6 pb-6 border-t border-gray-50">
-                <p className="text-xs text-gray-400 mt-4 mb-5">Fields pre-filled from the admission. Add the student ID and enrollment date to complete.</p>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Student ID <span className="text-red-500">*</span></label>
-                    <Input
-                      required
-                      value={studentForm.data.student_id}
-                      onChange={(e) => studentForm.setData("student_id", e.target.value)}
-                      placeholder="ACM-2025-001"
-                      className="rounded-xl border-gray-200"
-                    />
-                    {studentForm.errors.student_id && <p className="text-red-500 text-xs">{studentForm.errors.student_id}</p>}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Full Name</label>
-                    <Input value={studentForm.data.full_name} readOnly className="rounded-xl border-gray-200 bg-gray-50" />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Date of Birth <span className="text-red-500">*</span></label>
-                    <DatePicker
-                      value={studentForm.data.date_of_birth ? new Date(studentForm.data.date_of_birth + "T00:00:00") : undefined}
-                      onChange={(d) => studentForm.setData("date_of_birth", d ? d.toISOString().split("T")[0] : "")}
-                      placeholder="Pick date of birth"
-                    />
-                    {studentForm.errors.date_of_birth && <p className="text-red-500 text-xs">{studentForm.errors.date_of_birth}</p>}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Email</label>
-                    <Input value={studentForm.data.email} readOnly className="rounded-xl border-gray-200 bg-gray-50" />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Nationality <span className="text-red-500">*</span></label>
-                    <Input
-                      required
-                      value={studentForm.data.nationality}
-                      onChange={(e) => studentForm.setData("nationality", e.target.value)}
-                      placeholder="e.g. British"
-                      className="rounded-xl border-gray-200"
-                    />
-                    {studentForm.errors.nationality && <p className="text-red-500 text-xs">{studentForm.errors.nationality}</p>}
-                  </div>
-
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Mobile <span className="text-red-500">*</span></label>
-                    <div className="flex gap-2">
-                      <div className="w-64 shrink-0">
-                        <Combobox
-                          options={countryCodeOptions}
-                          value={studentForm.data.phone_country_code}
-                          onChange={(v) => studentForm.setData("phone_country_code", v)}
-                          placeholder="Country code…"
-                          searchPlaceholder="Search country…"
-                        />
-                      </div>
-                      <Input
-                        required
-                        value={studentForm.data.phone}
-                        onChange={(e) => studentForm.setData("phone", e.target.value)}
-                        placeholder="Phone number"
-                        className="rounded-xl border-gray-200 flex-1"
-                      />
-                    </div>
-                    {studentForm.errors.phone_country_code && <p className="text-red-500 text-xs">{studentForm.errors.phone_country_code}</p>}
-                    {studentForm.errors.phone && <p className="text-red-500 text-xs">{studentForm.errors.phone}</p>}
-                  </div>
-
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Address</label>
-                    <Input
-                      value={studentForm.data.address}
-                      onChange={(e) => studentForm.setData("address", e.target.value)}
-                      placeholder="Full postal address"
-                      className="rounded-xl border-gray-200"
-                    />
-                    {studentForm.errors.address && <p className="text-red-500 text-xs">{studentForm.errors.address}</p>}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Programme</label>
-                    <Input value={studentForm.data.program_slug} readOnly className="rounded-xl border-gray-200 bg-gray-50 font-mono text-sm" />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Enrollment Date <span className="text-red-500">*</span></label>
-                    <DatePicker
-                      value={parseDate(studentForm.data.enrollment_date)}
-                      onChange={(d) => studentForm.setData("enrollment_date", formatDate(d))}
-                      placeholder="Pick enrollment date"
-                    />
-                    {studentForm.errors.enrollment_date && <p className="text-red-500 text-xs">{studentForm.errors.enrollment_date}</p>}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Status</label>
-                    <Select value={studentForm.data.status} onValueChange={(v) => studentForm.setData("status", v)}>
-                      <SelectTrigger className="rounded-xl border-gray-200"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="graduated">Graduated</SelectItem>
-                        <SelectItem value="suspended">Suspended</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <ImageCropper
-                      aspectRatio={1}
-                      maxSizeMb={5}
-                      onChange={(f) => studentForm.setData("image", f)}
-                      label="Student Photo (optional, max 5 MB)"
-                    />
-                  </div>
+              <div className="px-6 pb-6 border-t border-gray-50">
+                <div className="mt-4">
+                  <VerifiedStudentForm
+                    nationalities={nationalities}
+                    programs={programs}
+                    nextStudentId={next_student_id}
+                    availableCertificates={available_certificates}
+                    submitUrl="/admin/students"
+                    submitLabel="Create Student Record"
+                    submittingLabel="Creating..."
+                    introText="Some fields were pre-filled from the admission. Complete the remaining details to create the verified student record."
+                    initialValues={{
+                      first_name,
+                      last_name,
+                      full_name: admission.full_name,
+                      email: admission.email,
+                      nationality_id: admission.nationality_id ? String(admission.nationality_id) : "",
+                      phone_country_code: admission.phone_country_code ?? "",
+                      phone: admission.phone.replace(/\D/g, ""),
+                      program_id: String(admission.program_id),
+                      admission_id: String(admission.id),
+                      status: "active",
+                    }}
+                  />
                 </div>
-
-                <button
-                  type="submit"
-                  disabled={studentForm.processing}
-                  className="mt-5 bg-[#1a3a5c] text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 disabled:opacity-60 transition-colors shadow-sm"
-                >
-                  {studentForm.processing ? "Creating…" : "Create Student Record"}
-                </button>
-              </form>
+              </div>
             )}
           </div>
         )}

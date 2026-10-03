@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 class StudentProgram extends Model
 {
+    protected $appends = ['program_slug', 'program_title'];
+
     protected $fillable = [
         'verified_student_id',
-        'program_slug',
+        'program_id',
         'admission_id',
         'enrollment_date',
         'graduation_date',
@@ -42,6 +44,16 @@ class StudentProgram extends Model
 
     public function program()
     {
-        return $this->belongsTo(Program::class, 'program_slug', 'slug');
+        return $this->belongsTo(Program::class);
+    }
+
+    public function getProgramSlugAttribute(): ?string
+    {
+        return $this->program?->slug;
+    }
+
+    public function getProgramTitleAttribute(): ?string
+    {
+        return $this->program?->title;
     }
 }

@@ -13,10 +13,10 @@ class StudentProgramController extends Controller
     public function store(Request $request, VerifiedStudent $student)
     {
         $data = $request->validate([
-            'program_slug'    => [
-                'required', 'string', 'max:255',
+            'program_id'      => [
+                'required', 'integer', 'exists:programs,id',
                 function ($attribute, $value, $fail) use ($student) {
-                    if ($student->studentPrograms()->where('program_slug', $value)->exists()) {
+                    if ($student->studentPrograms()->where('program_id', $value)->exists()) {
                         $fail('This student is already enrolled in that programme.');
                     }
                 },
@@ -37,7 +37,7 @@ class StudentProgramController extends Controller
         if ($certificateId) {
             $cert = Certificate::findOrFail($certificateId);
 
-            if ($cert->program_slug !== $sp->program_slug) {
+            if ((int) $cert->program_id !== (int) $sp->program_id) {
                 return back()->withErrors(['certificate_id' => 'Certificate does not match this programme.']);
             }
 
@@ -54,11 +54,11 @@ class StudentProgramController extends Controller
     public function update(Request $request, VerifiedStudent $student, StudentProgram $sp)
     {
         $data = $request->validate([
-            'program_slug'    => [
-                'required', 'string', 'max:255',
+            'program_id'      => [
+                'required', 'integer', 'exists:programs,id',
                 function ($attribute, $value, $fail) use ($student, $sp) {
                     if ($student->studentPrograms()
-                        ->where('program_slug', $value)
+                        ->where('program_id', $value)
                         ->where('id', '!=', $sp->id)
                         ->exists()
                     ) {
@@ -82,7 +82,7 @@ class StudentProgramController extends Controller
         if ($certificateId && $sp->certificate_id !== (int) $certificateId) {
             $cert = Certificate::findOrFail($certificateId);
 
-            if ($cert->program_slug !== $sp->program_slug) {
+            if ((int) $cert->program_id !== (int) $sp->program_id) {
                 return back()->withErrors(['certificate_id' => 'Certificate does not match this programme.']);
             }
 
@@ -129,7 +129,7 @@ class StudentProgramController extends Controller
 
         $cert = Certificate::findOrFail($request->certificate_id);
 
-        if ($cert->program_slug !== $sp->program_slug) {
+        if ((int) $cert->program_id !== (int) $sp->program_id) {
             return back()->withErrors(['certificate' => 'Certificate does not match this programme.']);
         }
 

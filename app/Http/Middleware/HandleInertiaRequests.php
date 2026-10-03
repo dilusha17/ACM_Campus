@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CountryCode;
+use App\Models\Nationality;
 use App\Models\Program;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -32,10 +34,13 @@ class HandleInertiaRequests extends Middleware
                 'error'                => fn () => $request->session()->get('error'),
                 'created_certificate'  => fn () => $request->session()->get('created_certificate'),
             ],
+            'countryCodes' => fn () => CountryCode::orderBy('name')->get(['id', 'name', 'dial_code']),
+            'nationalityOptions' => fn () => Nationality::orderBy('name')->get(['id', 'name']),
             'programOptions' => fn () => Program::where('is_active', true)
                 ->orderBy('title')
-                ->get(['slug', 'title', 'level'])
+                ->get(['id', 'slug', 'title', 'level'])
                 ->map(fn (Program $program) => [
+                    'id'    => $program->id,
                     'slug'  => $program->slug,
                     'title' => $program->title,
                     'level' => $program->level,

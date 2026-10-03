@@ -22,8 +22,8 @@ class DashboardController extends Controller
                 'totalAdmissions'     => Admission::count(),
                 'totalScholarships'   => ScholarshipApplication::count(),
             ],
-            'recentAdmissions'   => Admission::latest()->take(5)->get(['id', 'full_name', 'email', 'program_slug', 'status', 'created_at']),
-            'recentScholarships' => ScholarshipApplication::latest()->take(5)->get(['id', 'full_name', 'email', 'scheme', 'status', 'created_at']),
+            'recentAdmissions'   => Admission::with('program')->latest()->take(5)->get(['id', 'full_name', 'email', 'program_id', 'status', 'created_at']),
+            'recentScholarships' => ScholarshipApplication::with('program')->latest()->take(5)->get(['id', 'full_name', 'email', 'program_id', 'scheme', 'status', 'created_at']),
             'recentContacts'     => ContactInquiry::latest()->take(5)->get(['id', 'name', 'email', 'subject', 'status', 'created_at']),
         ]);
     }

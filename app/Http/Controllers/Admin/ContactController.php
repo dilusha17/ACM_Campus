@@ -50,7 +50,13 @@ class ContactController extends Controller
             'reply_message' => 'required|string|max:5000',
         ]);
 
-        Mail::to($inquiry->email)->send(new ContactReplyMail($inquiry, $request->reply_message));
+        try {
+            Mail::to($inquiry->email)->send(new ContactReplyMail($inquiry, $request->reply_message));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'The reply could not be sent. Please try again later.');
+        }
 
         $inquiry->update(['status' => 'replied']);
 

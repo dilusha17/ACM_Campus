@@ -1,4 +1,4 @@
-import { Link, router, useForm } from "@inertiajs/react";
+import { Link, router, useForm, usePage } from "@inertiajs/react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { ChevronLeft, Pencil, Plus, Trash2, Award, X, Check } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,7 @@ import { Progress } from "@/components/ui/progress";
 import { ImageCropper } from "@/components/ui/image-cropper";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { countryCodeOptions } from "@/data/countryCodes";
+import { dialCodeOptions, type CountryCode } from "@/lib/countryCodes";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,11 +55,12 @@ interface CertificateData {
 interface AvailableCert {
   id: number;
   certificate_number: string;
-  program_slug: string;
+  program_id: number;
 }
 
 interface StudentProgramRow {
   id: number;
+  program_id: number;
   program_slug: string;
   admission_id: number | null;
   enrollment_date: string;
@@ -139,7 +140,7 @@ const ProgramEditRow = ({
   onClose: () => void;
 }) => {
   const { data, setData, patch, processing, errors } = useForm({
-    program_slug:    sp.program_slug,
+    program_id:      String(sp.program_id),
     admission_id:    sp.admission_id ? String(sp.admission_id) : "",
     enrollment_date: sp.enrollment_date ?? "",
     graduation_date: sp.graduation_date ?? "",
@@ -152,23 +153,23 @@ const ProgramEditRow = ({
   const [certsLoading, setCertsLoading] = useState(false);
 
   useEffect(() => {
-    if (!data.program_slug) { setFetchedCerts([]); return; }
+    if (!data.program_id) { setFetchedCerts([]); return; }
     setCertsLoading(true);
-    axios.get<AvailableCert[]>("/admin/certificates/available", { params: { programme: data.program_slug } })
+    axios.get<AvailableCert[]>("/admin/certificates/available", { params: { programme: data.program_id } })
       .then((res) => setFetchedCerts(res.data))
       .catch(() => setFetchedCerts([]))
       .finally(() => setCertsLoading(false));
-  }, [data.program_slug]);
+  }, [data.program_id]);
 
   // Prepend the currently-assigned cert when still on the same programme (it won't appear in fetch result)
   const certOptions: AvailableCert[] = [
-    ...(sp.certificate && data.program_slug === sp.program_slug
-      ? [{ id: sp.certificate.id, certificate_number: sp.certificate.certificate_number, program_slug: sp.program_slug }]
+    ...(sp.certificate && data.program_id === String(sp.program_id)
+      ? [{ id: sp.certificate.id, certificate_number: sp.certificate.certificate_number, program_id: sp.program_id }]
       : []),
     ...fetchedCerts.filter((c) => !sp.certificate || c.id !== sp.certificate.id),
   ];
 
-  const programOptions = programs.map((p) => ({ value: p.slug, label: p.title, sub: p.level }));
+  const programOptions = programs.map((p) => ({ value: String(p.id), label: p.title, sub: p.level }));
   const admissionOptions = [
     { value: "", label: "None" },
     ...admissions.map((a) => ({ value: String(a.id), label: a.full_name, sub: a.email })),
@@ -181,11 +182,11 @@ const ProgramEditRow = ({
 
   return (
     <form onSubmit={submit} className="bg-blue-50/40 border border-blue-100 rounded-xl p-4 mt-3 grid sm:grid-cols-2 gap-4">
-      <Field label="Programme" error={errors.program_slug}>
+      <Field label="Programme" error={errors.program_id}>
         <Combobox
           options={programOptions}
-          value={data.program_slug}
-          onChange={(v) => setData((prev) => ({ ...prev, program_slug: v, certificate_id: "" }))}
+          value={data.program_id}
+          onChange={(v) => setData((prev) => ({ ...prev, program_id: v, certificate_id: "" }))}
           placeholder="Select programme..."
           searchPlaceholder="Search..."
         />
@@ -278,7 +279,7 @@ const AddProgramForm = ({
   onClose: () => void;
 }) => {
   const { data, setData, post, processing, errors, reset } = useForm({
-    program_slug:    "",
+    program_id:      "",
     admission_id:    "",
     enrollment_date: "",
     graduation_date: "",
@@ -291,17 +292,17 @@ const AddProgramForm = ({
   const [certsLoading, setCertsLoading] = useState(false);
 
   useEffect(() => {
-    if (!data.program_slug) { setFetchedCerts([]); return; }
+    if (!data.program_id) { setFetchedCerts([]); return; }
     setCertsLoading(true);
-    axios.get<AvailableCert[]>("/admin/certificates/available", { params: { programme: data.program_slug } })
+    axios.get<AvailableCert[]>("/admin/certificates/available", { params: { programme: data.program_id } })
       .then((res) => setFetchedCerts(res.data))
       .catch(() => setFetchedCerts([]))
       .finally(() => setCertsLoading(false));
-  }, [data.program_slug]);
+  }, [data.program_id]);
 
   const certsForProgram = [...fetchedCerts].sort((a, b) => b.certificate_number.localeCompare(a.certificate_number));
 
-  const programOptions = programs.map((p) => ({ value: p.slug, label: p.title, sub: p.level }));
+  const programOptions = programs.map((p) => ({ value: String(p.id), label: p.title, sub: p.level }));
   const admissionOptions = [
     { value: "", label: "None" },
     ...admissions.map((a) => ({ value: String(a.id), label: a.full_name, sub: a.email })),
@@ -318,11 +319,11 @@ const AddProgramForm = ({
     <div className="border-t border-gray-100 px-6 py-5 bg-gray-50/40">
       <h3 className="text-sm font-semibold text-gray-700 mb-4">Add Programme Enrollment</h3>
       <form onSubmit={submit} className="grid sm:grid-cols-2 gap-4">
-        <Field label="Programme" error={errors.program_slug}>
+        <Field label="Programme" error={errors.program_id}>
           <Combobox
             options={programOptions}
-            value={data.program_slug}
-            onChange={(v) => setData((prev) => ({ ...prev, program_slug: v, certificate_id: "" }))}
+            value={data.program_id}
+            onChange={(v) => setData((prev) => ({ ...prev, program_id: v, certificate_id: "" }))}
             placeholder="Select programme..."
             searchPlaceholder="Search..."
           />
@@ -417,6 +418,7 @@ const Edit = ({
   nationalities: Nationality[];
   available_certificates: Record<string, AvailableCert[]>;
 }) => {
+  const { countryCodes } = usePage<{ countryCodes: CountryCode[] }>().props;
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [editingSpId, setEditingSpId]       = useState<number | null>(null);
   const [deleteSpId, setDeleteSpId]         = useState<number | null>(null);
@@ -639,7 +641,7 @@ const Edit = ({
               <div className="flex gap-2">
                 <div className="w-64 shrink-0">
                   <Combobox
-                    options={countryCodeOptions}
+                    options={dialCodeOptions(countryCodes)}
                     value={data.phone_country_code}
                     onChange={(v) => setData("phone_country_code", v)}
                     placeholder="Country code…"
@@ -649,7 +651,7 @@ const Edit = ({
                 <Input
                   required
                   value={data.phone}
-                  onChange={(e) => setData("phone", e.target.value)}
+                  onChange={(e) => setData("phone", e.target.value.replace(/\D/g, ""))}
                   placeholder="9 or 10 digit number"
                   className="rounded-xl border-gray-200 flex-1"
                 />
@@ -768,7 +770,7 @@ const Edit = ({
                       </div>
                     ) : sp.status === "graduated" ? (
                       <div className="mt-2 flex items-center gap-2 flex-wrap">
-                        {(available_certificates[sp.program_slug] ?? []).length > 0 ? (
+                        {(available_certificates[String(sp.program_id)] ?? []).length > 0 ? (
                           <>
                             <select
                               value={assignCertMap[sp.id] ?? ""}
@@ -778,7 +780,7 @@ const Edit = ({
                               className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                             >
                               <option value="">Select certificate…</option>
-                              {(available_certificates[sp.program_slug] ?? []).map((cert) => (
+                              {(available_certificates[String(sp.program_id)] ?? []).map((cert) => (
                                 <option key={cert.id} value={String(cert.id)}>
                                   {cert.certificate_number}
                                 </option>

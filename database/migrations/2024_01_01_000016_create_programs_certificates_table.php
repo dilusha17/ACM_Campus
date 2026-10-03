@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('programs_certificates', function (Blueprint $table) {
             $table->id();
-            $table->string('program_slug');
+            $table->unsignedBigInteger('program_id');
             $table->string('certificate_number')->unique();
             $table->date('issue_date');
             $table->enum('level', ['Degree', 'Diploma', 'Certificate', 'Master', 'PhD']);
@@ -19,7 +19,7 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index('program_slug');
+            $table->foreign('program_id')->references('id')->on('programs')->onDelete('cascade');
         });
     }
 

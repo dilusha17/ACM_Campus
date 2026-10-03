@@ -21,8 +21,12 @@ class ContactController extends Controller
 
         $inquiry = ContactInquiry::create($data);
 
-        Mail::to('info@acmcampus.uk')->send(new ContactSubmittedMail($inquiry));
-        Mail::to($inquiry->email)->send(new ContactAutoReplyMail($inquiry));
+        try {
+            Mail::to('info@acmcampus.uk')->send(new ContactSubmittedMail($inquiry));
+            Mail::to($inquiry->email)->send(new ContactAutoReplyMail($inquiry));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return back()->with('success', 'Your message has been sent. We will reply within 2–3 working days.');
     }

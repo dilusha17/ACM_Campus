@@ -9,8 +9,10 @@ class Certificate extends Model
 {
     protected $table = 'programs_certificates';
 
+    protected $appends = ['program_slug', 'program_title'];
+
     protected $fillable = [
-        'program_slug',
+        'program_id',
         'certificate_number',
         'issue_date',
         'level',
@@ -33,7 +35,17 @@ class Certificate extends Model
 
     public function program()
     {
-        return $this->belongsTo(Program::class, 'program_slug', 'slug');
+        return $this->belongsTo(Program::class);
+    }
+
+    public function getProgramSlugAttribute(): ?string
+    {
+        return $this->program?->slug;
+    }
+
+    public function getProgramTitleAttribute(): ?string
+    {
+        return $this->program?->title;
     }
 
     /**

@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('full_name');
             $table->string('email');
-            $table->string('program_slug');
+            $table->unsignedBigInteger('program_id');
             $table->enum('scheme', ['Merit', 'Need-based', 'International', 'Research']);
             $table->string('annual_household_income');
             $table->text('motivation_statement');
@@ -22,6 +22,8 @@ return new class extends Migration
             $table->string('referee2_email');
             $table->enum('status', ['pending', 'reviewed', 'approved', 'rejected'])->default('pending');
             $table->timestamps();
+
+            $table->foreign('program_id')->references('id')->on('programs')->onDelete('cascade');
         });
     }
 

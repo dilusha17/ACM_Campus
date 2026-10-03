@@ -13,7 +13,7 @@ class ScholarshipController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ScholarshipApplication::latest();
+        $query = ScholarshipApplication::with('program')->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -39,7 +39,7 @@ class ScholarshipController extends Controller
     public function show(ScholarshipApplication $application)
     {
         return Inertia::render('Admin/Scholarships/Show', [
-            'application' => $application,
+            'application' => $application->load('program'),
         ]);
     }
 
@@ -53,7 +53,13 @@ class ScholarshipController extends Controller
         $application->update(['status' => $newStatus]);
 
         if ($oldStatus !== $newStatus) {
-            Mail::to($application->email)->send(new ScholarshipStatusMail($application, $newStatus));
+            try {
+                Mail::to($application->email)->send(new ScholarshipStatusMail($application->loadMissing('program'), $newStatus));
+            } catch (\Throwable $e) {
+                report($e);
+
+                return back()->with('error', 'Status updated, but the notification email could not be sent.');
+            }
         }
 
         return back()->with('success', 'Status updated and notification sent.');

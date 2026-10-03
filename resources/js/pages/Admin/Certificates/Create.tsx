@@ -21,6 +21,7 @@ interface Program {
 
 interface RecentCert {
   id: number;
+  program_id: number;
   certificate_number: string;
   program_slug: string;
   program_title: string;
@@ -55,31 +56,33 @@ const Create = ({
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const { data, setData, post, processing } = useForm<{
-    program_slug: string;
+    program_id: string;
     graduated_year: string;
     level: string;
     pdf: File | null;
   }>({
-    program_slug:   "",
+    program_id:     "",
     graduated_year: String(currentYear),
     level:          "Diploma",
     pdf:            null,
   });
 
   const programOptions = programs.map((p) => ({
-    value: p.slug,
+    value: String(p.id),
     label: p.title,
     sub:   p.level,
   }));
 
-  const handleProgramChange = (slug: string) => {
-    setData("program_slug", slug);
-    const prog = programs.find((p) => p.slug === slug);
+  const selectedProgram = programs.find((p) => String(p.id) === data.program_id);
+
+  const handleProgramChange = (programId: string) => {
+    setData("program_id", programId);
+    const prog = programs.find((p) => String(p.id) === programId);
     if (prog) setData("level", prog.level);
   };
 
   const handleGenerate = () => {
-    if (!data.program_slug) return;
+    if (!data.program_id) return;
     post("/admin/certificates", { forceFormData: true });
   };
 
@@ -130,7 +133,7 @@ const Create = ({
               <Label className="text-sm font-medium text-gray-700">Programme</Label>
               <Combobox
                 options={programOptions}
-                value={data.program_slug}
+                value={data.program_id}
                 onChange={handleProgramChange}
                 placeholder="Select programme…"
                 searchPlaceholder="Search programmes…"
@@ -192,12 +195,12 @@ const Create = ({
             </div>
 
             {/* ID preview */}
-            {data.program_slug && (
+            {selectedProgram && (
               <div className="sm:col-span-2">
                 <p className="text-xs text-gray-400">
                   Next ID will follow the pattern:{" "}
                   <span className="font-mono font-semibold text-gray-600">
-                    ACM-{data.graduated_year}-{data.program_slug.toUpperCase().replace(/-/g, "")}-XXX
+                    ACM-{data.graduated_year}-{selectedProgram.slug.toUpperCase().replace(/-/g, "")}-XXX
                   </span>
                 </p>
               </div>
@@ -208,7 +211,7 @@ const Create = ({
             <button
               type="button"
               onClick={handleGenerate}
-              disabled={processing || !data.program_slug}
+              disabled={processing || !data.program_id}
               className="inline-flex items-center gap-2 bg-[#1a3a5c] text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 disabled:opacity-50 transition-colors shadow-sm"
             >
               {processing ? (

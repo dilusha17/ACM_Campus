@@ -6,7 +6,7 @@
   <div class="header"><h1>Application Received — ACM Campus</h1></div>
   <div class="body">
     <p>Dear {{ $admission->full_name }},</p>
-    <p>Thank you for applying to <strong>Ashuvedya Complementary Medicine Campus</strong>. We are pleased to confirm that your application for the <strong>{{ $admission->program_slug }}</strong> programme has been received.</p>
+    <p>Thank you for applying to <strong>Ashuvedya Complementary Medicine Campus</strong>. We are pleased to confirm that your application for the <strong>{{ $admission->program_title ?? $admission->program_slug }}</strong> programme has been received.</p>
     <p><strong>What happens next?</strong></p>
     <ul>
       <li>Your application will be reviewed by our admissions committee.</li>

@@ -8,7 +8,7 @@
     <p>A new scholarship application has been submitted.</p>
     <div class="label">Full Name</div><div class="value">{{ $application->full_name }}</div>
     <div class="label">Email</div><div class="value"><a href="mailto:{{ $application->email }}">{{ $application->email }}</a></div>
-    <div class="label">Programme</div><div class="value">{{ $application->program_slug }}</div>
+    <div class="label">Programme</div><div class="value">{{ $application->program_title ?? $application->program_slug }}</div>
     <div class="label">Scheme</div><div class="value">{{ $application->scheme }}</div>
     <div class="label">Annual Household Income</div><div class="value">{{ $application->annual_household_income }}</div>
     <div class="label">Motivation Statement</div><div class="msg">{{ $application->motivation_statement }}</div>

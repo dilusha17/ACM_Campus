@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             ProgramSeeder::class,
             NationalitySeeder::class,
+            CountryCodeSeeder::class,
         ]);
     }
 }

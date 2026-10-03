@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/select";
 import { usePage } from "@inertiajs/react";
 import type { ProgramOption } from "@/types/program";
+import { Combobox } from "@/components/ui/combobox";
+import { countryIdOptions, type CountryCode } from "@/lib/countryCodes";
 
 interface AdmissionFormProps {
   defaultProgramSlug?: string;
@@ -31,16 +33,20 @@ interface AdmissionFormProps {
 }
 
 const AdmissionForm = ({ defaultProgramSlug, onSubmitted }: AdmissionFormProps) => {
-  const { props } = usePage<{ programOptions: ProgramOption[] }>();
+  const { props } = usePage<{ programOptions: ProgramOption[]; countryCodes: CountryCode[]; nationalityOptions: { id: number; name: string }[] }>();
   const programs = props.programOptions ?? [];
+  const countryOptions = countryIdOptions(props.countryCodes ?? []);
+  const nationalityOptions = (props.nationalityOptions ?? []).map((n) => ({ value: String(n.id), label: n.name }));
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const defaultProgramId = programs.find((program) => program.slug === defaultProgramSlug)?.id;
 
   const { data, setData, post, processing, errors, reset, wasSuccessful } = useForm({
     full_name:            "",
     email:                "",
+    country_code_id:      "",
     phone:                "",
-    nationality:          "",
-    program_slug:         defaultProgramSlug ?? "",
+    nationality_id:       "",
+    program_id:           defaultProgramId ? String(defaultProgramId) : "",
     education_history:    "",
     english_qualifications: "",
     declaration_accepted: false as boolean,
@@ -48,7 +54,9 @@ const AdmissionForm = ({ defaultProgramSlug, onSubmitted }: AdmissionFormProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!data.program_slug) { toast.error("Please select a programme."); return; }
+    if (!data.program_id) { toast.error("Please select a programme."); return; }
+    if (!data.nationality_id) { toast.error("Please select your nationality."); return; }
+    if (!data.country_code_id) { toast.error("Please select your country."); return; }
     if (!data.declaration_accepted) return;
     setConfirmOpen(true);
   };
@@ -63,7 +71,7 @@ const AdmissionForm = ({ defaultProgramSlug, onSubmitted }: AdmissionFormProps) 
         reset();
         onSubmitted?.();
       },
-      onError: () => toast.error("Something went wrong. Please try again."),
+      onError: (errs) => toast.error(Object.values(errs)[0] ?? "Something went wrong. Please try again."),
     });
   };
 
@@ -82,32 +90,60 @@ const AdmissionForm = ({ defaultProgramSlug, onSubmitted }: AdmissionFormProps) 
             {errors.email && <p className="text-destructive text-xs">{errors.email}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="ad-phone">Phone</Label>
-            <Input id="ad-phone" required value={data.phone} onChange={(e) => setData("phone", e.target.value)} placeholder="+44 ..." />
-            {errors.phone && <p className="text-destructive text-xs">{errors.phone}</p>}
+            <Label>Nationality <span className="text-red-500">*</span></Label>
+            <Combobox
+              options={nationalityOptions}
+              value={data.nationality_id}
+              onChange={(v) => setData("nationality_id", v)}
+              placeholder="Select nationality..."
+              searchPlaceholder="Search nationality..."
+            />
+            {errors.nationality_id && <p className="text-destructive text-xs">{errors.nationality_id}</p>}
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-[16rem_1fr] gap-4">
+          <div className="space-y-2">
+            <Label>Country <span className="text-red-500">*</span></Label>
+            <Combobox
+              options={countryOptions}
+              value={data.country_code_id}
+              onChange={(v) => setData("country_code_id", v)}
+              placeholder="Select country..."
+              searchPlaceholder="Search country..."
+            />
+            {errors.country_code_id && <p className="text-destructive text-xs">{errors.country_code_id}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="ad-nationality">Nationality</Label>
-            <Input id="ad-nationality" required value={data.nationality} onChange={(e) => setData("nationality", e.target.value)} placeholder="British" />
-            {errors.nationality && <p className="text-destructive text-xs">{errors.nationality}</p>}
+            <Label htmlFor="ad-phone">Phone Number <span className="text-red-500">*</span></Label>
+            <Input
+              id="ad-phone"
+              required
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={data.phone}
+              onChange={(e) => setData("phone", e.target.value.replace(/\D/g, ""))}
+              placeholder="Number (digits only)"
+            />
+            {errors.phone && <p className="text-destructive text-xs">{errors.phone}</p>}
           </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="ad-program">Programme</Label>
-          <Select value={data.program_slug} onValueChange={(v) => setData("program_slug", v)}>
+          <Select value={data.program_id} onValueChange={(value) => setData("program_id", value)}>
             <SelectTrigger id="ad-program">
               <SelectValue placeholder="Select a programme" />
             </SelectTrigger>
             <SelectContent>
               {programs.map((p) => (
-                <SelectItem key={p.slug} value={p.slug}>
+                <SelectItem key={p.id} value={String(p.id)}>
                   {p.title} · {p.level}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {errors.program_slug && <p className="text-destructive text-xs">{errors.program_slug}</p>}
+          {errors.program_id && <p className="text-destructive text-xs">{errors.program_id}</p>}
         </div>
 
         <div className="space-y-2">
@@ -131,6 +167,7 @@ const AdmissionForm = ({ defaultProgramSlug, onSubmitted }: AdmissionFormProps) 
           />
           <span>I declare the information provided is accurate and consent to ACM Campus processing it for admissions purposes.</span>
         </label>
+        {errors.declaration_accepted && <p className="text-destructive text-xs">{errors.declaration_accepted}</p>}
 
         <Button type="submit" disabled={processing || !data.declaration_accepted} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
           {processing ? "Submitting…" : "Review & Submit Application"}

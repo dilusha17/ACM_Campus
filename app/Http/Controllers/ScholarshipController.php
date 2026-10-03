@@ -15,7 +15,7 @@ class ScholarshipController extends Controller
         $data = $request->validate([
             'full_name'                => 'required|string|max:255',
             'email'                    => 'required|email|max:255',
-            'program_slug'             => 'required|string|max:255',
+            'program_id'               => 'required|exists:programs,id',
             'scheme'                   => 'required|in:Merit,Need-based,International,Research',
             'annual_household_income'  => 'required|string|max:100',
             'motivation_statement'     => 'required|string|max:8000',
@@ -25,10 +25,14 @@ class ScholarshipController extends Controller
             'referee2_email'           => 'required|email|max:255',
         ]);
 
-        $application = ScholarshipApplication::create($data);
+        $application = ScholarshipApplication::create($data)->load('program');
 
-        Mail::to('info@acmcampus.uk')->send(new ScholarshipSubmittedMail($application));
-        Mail::to($application->email)->send(new ScholarshipAutoReplyMail($application));
+        try {
+            Mail::to('info@acmcampus.uk')->send(new ScholarshipSubmittedMail($application));
+            Mail::to($application->email)->send(new ScholarshipAutoReplyMail($application));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return back()->with('success', 'Your scholarship application has been submitted. Our committee will review it and contact you within 4–6 weeks.');
     }

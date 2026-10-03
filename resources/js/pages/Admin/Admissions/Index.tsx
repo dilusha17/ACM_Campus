@@ -1,6 +1,6 @@
 import { Link, router } from "@inertiajs/react";
 import AdminLayout from "@/layouts/AdminLayout";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -8,6 +8,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import AdmissionForm from "@/components/forms/AdmissionForm";
+import { useState } from "react";
 
 const statusStyles: Record<string, string> = {
   pending:  "bg-amber-50 text-amber-700 ring-1 ring-amber-200/80",
@@ -24,25 +32,40 @@ const StatusBadge = ({ status }: { status: string }) => (
 
 interface Admission {
   id: number; full_name: string; email: string; phone: string;
-  nationality: string; program_slug: string; status: string; created_at: string;
+  nationality: string; program_title: string | null; status: string; created_at: string;
 }
 
 interface Props {
   admissions: { data: Admission[]; links: any[]; meta: any };
   filters: { status?: string; search?: string };
+  total_applications: number;
 }
 
-const Index = ({ admissions, filters }: Props) => {
+const clampTwoLines = "overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] break-words";
+
+const Index = ({ admissions, filters, total_applications }: Props) => {
   const setFilter = (key: string, value: string) =>
     router.get("/admin/admissions", { ...filters, [key]: value || undefined }, { preserveState: true, replace: true });
+  const [newAdmissionOpen, setNewAdmissionOpen] = useState(false);
 
   return (
+    <>
     <AdminLayout>
       <div className="space-y-6 max-w-7xl">
         {/* Page header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admissions</h1>
-          <p className="text-gray-500 text-sm mt-1">{admissions.meta?.total ?? 0} total applications</p>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Admissions</h1>
+            <p className="text-gray-500 text-sm mt-1">{total_applications ?? admissions.meta?.total ?? 0} total applications</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setNewAdmissionOpen(true)}
+            className="flex items-center gap-2 bg-[#1a3a5c] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 transition-colors shadow-sm"
+          >
+            <Plus size={16} />
+            Record Admission
+          </button>
         </div>
 
         {/* Filters */}
@@ -72,12 +95,16 @@ const Index = ({ admissions, filters }: Props) => {
 
         {/* Table */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm table-fixed">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60">
                   {["Name","Email","Programme","Nationality","Status","Date",""].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    <th
+                      key={h}
+                      className={`text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider ${h === "Name" ? "w-[20%]" : ""} ${h === "Email" ? "w-[22%]" : ""} ${h === "Programme" ? "w-[20%]" : ""} ${h === "Nationality" ? "w-[14%]" : ""} ${h === "Status" ? "w-[10%]" : ""} ${h === "Date" ? "w-[10%]" : ""} ${h === "" ? "w-[4rem]" : ""}`}
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -91,13 +118,13 @@ const Index = ({ admissions, filters }: Props) => {
                 ) : (
                   admissions.data.map((a) => (
                     <tr key={a.id} className="hover:bg-gray-50/70 transition-colors">
-                      <td className="px-4 py-3.5 font-medium text-gray-800 whitespace-nowrap">{a.full_name}</td>
-                      <td className="px-4 py-3.5 text-gray-500">{a.email}</td>
-                      <td className="px-4 py-3.5 text-gray-500 max-w-40"><p className="truncate">{a.program_slug}</p></td>
-                      <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">{a.nationality}</td>
-                      <td className="px-4 py-3.5"><StatusBadge status={a.status} /></td>
+                      <td className="px-4 py-3.5 align-top font-medium text-gray-800"><p className={clampTwoLines}>{a.full_name}</p></td>
+                      <td className="px-4 py-3.5 align-top text-gray-500"><p className={clampTwoLines}>{a.email}</p></td>
+                      <td className="px-4 py-3.5 align-top text-gray-500"><p className={clampTwoLines}>{a.program_title ?? "—"}</p></td>
+                      <td className="px-4 py-3.5 align-top text-gray-500"><p className={clampTwoLines}>{a.nationality}</p></td>
+                      <td className="px-4 py-3.5 align-top"><StatusBadge status={a.status} /></td>
                       <td className="px-4 py-3.5 text-gray-400 whitespace-nowrap">{new Date(a.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3.5 align-top">
                         <Link
                           href={`/admin/admissions/${a.id}`}
                           className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
@@ -110,7 +137,6 @@ const Index = ({ admissions, filters }: Props) => {
                 )}
               </tbody>
             </table>
-          </div>
         </div>
 
         {/* Pagination */}
@@ -133,6 +159,16 @@ const Index = ({ admissions, filters }: Props) => {
         )}
       </div>
     </AdminLayout>
+
+    <Dialog open={newAdmissionOpen} onOpenChange={setNewAdmissionOpen}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Record New Admission</DialogTitle>
+        </DialogHeader>
+        <AdmissionForm onSubmitted={() => { setNewAdmissionOpen(false); router.reload(); }} />
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 

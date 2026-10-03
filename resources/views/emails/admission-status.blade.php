@@ -8,12 +8,12 @@
     <p>Dear {{ $admission->full_name }},</p>
 
     @if($newStatus === 'reviewed')
-      <p>Thank you for your patience. We are pleased to inform you that your application for the <strong>{{ $admission->program_slug }}</strong> programme is currently <strong>under review</strong> by our admissions committee.</p>
+      <p>Thank you for your patience. We are pleased to inform you that your application for the <strong>{{ $admission->program_title ?? $admission->program_slug }}</strong> programme is currently <strong>under review</strong> by our admissions committee.</p>
       <span class="badge badge-reviewed">Under Review</span>
       <p>We will be in touch with a final decision shortly. If you have any questions, please contact us at <a href="mailto:info@acmcampus.uk">info@acmcampus.uk</a>.</p>
 
     @elseif($newStatus === 'accepted')
-      <p>We are delighted to inform you that your application for the <strong>{{ $admission->program_slug }}</strong> programme has been <strong>accepted</strong>!</p>
+      <p>We are delighted to inform you that your application for the <strong>{{ $admission->program_title ?? $admission->program_slug }}</strong> programme has been <strong>accepted</strong>!</p>
       <span class="badge badge-accepted">Accepted</span>
 
       <p>To complete your enrolment and create your student profile, please reply to this email or contact us at <a href="mailto:info@acmcampus.uk">info@acmcampus.uk</a> with the following details:</p>
@@ -47,6 +47,10 @@
           <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">Nationality</td>
           <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">Country of citizenship</td>
         </tr>
+        <tr style="background:#f0f4f8">
+          <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">Gender</td>
+          <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">Male / Female / Other</td>
+        </tr>
         <tr>
           <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">Contact Number</td>
           <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">Including country code</td>
@@ -67,12 +71,12 @@
       <p>We look forward to welcoming you to Ashuvedya Complementary Medicine Campus.</p>
 
     @elseif($newStatus === 'rejected')
-      <p>Thank you for your interest in the <strong>{{ $admission->program_slug }}</strong> programme at ACM Campus. After careful consideration, we regret to inform you that we are unable to offer you a place at this time.</p>
+      <p>Thank you for your interest in the <strong>{{ $admission->program_title ?? $admission->program_slug }}</strong> programme at ACM Campus. After careful consideration, we regret to inform you that we are unable to offer you a place at this time.</p>
       <span class="badge badge-rejected">Unsuccessful</span>
       <p>We encourage you to consider reapplying in future intakes or exploring other programmes we offer. Please do not hesitate to contact us if you would like feedback on your application.</p>
 
     @else
-      <p>There has been an update to your application for the <strong>{{ $admission->program_slug }}</strong> programme. Your current application status is: <strong>{{ ucfirst($newStatus) }}</strong>.</p>
+      <p>There has been an update to your application for the <strong>{{ $admission->program_title ?? $admission->program_slug }}</strong> programme. Your current application status is: <strong>{{ ucfirst($newStatus) }}</strong>.</p>
     @endif
 
     <p>Warm regards,<br><strong>ACM Campus Admissions Team</strong></p>

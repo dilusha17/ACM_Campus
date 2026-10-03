@@ -9,6 +9,7 @@ use App\Models\Nationality;
 use App\Models\Program;
 use App\Models\StudentProgram;
 use App\Models\VerifiedStudent;
+use App\Services\VerifiedStudentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -39,7 +40,7 @@ class StudentController extends Controller
         }
 
         if ($request->filled('programme')) {
-            $query->whereHas('studentPrograms', fn($q) => $q->where('program_slug', $request->programme));
+            $query->whereHas('studentPrograms.program', fn($q) => $q->where('slug', $request->programme));
         }
 
         return Inertia::render('Admin/Students/Index', [
@@ -50,31 +51,22 @@ class StudentController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(VerifiedStudentService $verifiedStudentService)
     {
-        $year    = date('Y');
-        $prefix  = 'ACM-' . $year . '-';
-        $last    = VerifiedStudent::where('student_id', 'like', $prefix . '%')
-            ->orderByDesc('student_id')
-            ->value('student_id');
-        $seq     = $last ? ((int) substr($last, strlen($prefix))) + 1 : 1;
-        $nextId  = $prefix . str_pad($seq, 5, '0', STR_PAD_LEFT);
-
         $certs = Certificate::whereDoesntHave('studentProgram')
             ->where('status', 'active')
-            ->orderBy('program_slug')
             ->orderBy('certificate_number')
-            ->get(['id', 'certificate_number', 'program_slug']);
+            ->get(['id', 'certificate_number', 'program_id']);
 
         return Inertia::render('Admin/Students/Create', [
             'nationalities'          => Nationality::orderBy('name')->get(['id', 'name']),
             'programs'               => \App\Models\Program::where('is_active', true)->orderBy('title')->get(['id', 'slug', 'title', 'level']),
-            'next_student_id'        => $nextId,
-            'available_certificates' => $certs->groupBy('program_slug')->map(fn ($g) => $g->values()),
+            'next_student_id'        => $verifiedStudentService->nextStudentId(),
+            'available_certificates' => $certs->groupBy(fn ($certificate) => (string) $certificate->program_id)->map(fn ($g) => $g->values()),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, VerifiedStudentService $verifiedStudentService)
     {
         // Determine unique rule based on id_type
         $idType = $request->input('id_type', 'NIC');
@@ -93,9 +85,10 @@ class StudentController extends Controller
             'nationality_id'     => 'required|exists:nationalities,id',
             'gender'             => 'required|in:male,female,not_stated',
             'phone_country_code' => 'required|string|max:15',
-            'phone'              => 'required|string|max:30',
-            'address'            => 'nullable|string|max:500',
-            'program_slug'       => 'required|string|max:100',
+            'phone'              => ['required', 'string', 'max:30', 'regex:/^\d+$/'],
+            'address'            => 'required|string|max:500',
+            'program_id'         => 'required|integer|exists:programs,id',
+            'admission_id'       => 'nullable|integer|exists:admissions,id',
             'enrollment_date'    => 'required|date',
             'graduation_date'    => 'nullable|date|required_if:status,graduated',
             'suspended_date'     => 'nullable|date|required_if:status,suspended',
@@ -104,56 +97,7 @@ class StudentController extends Controller
             'image'              => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
-        // Auto-generate student ID
-        $year   = date('Y');
-        $prefix = 'ACM-' . $year . '-';
-        $last   = VerifiedStudent::where('student_id', 'like', $prefix . '%')
-            ->lockForUpdate()
-            ->orderByDesc('student_id')
-            ->value('student_id');
-        $seq      = $last ? ((int) substr($last, strlen($prefix))) + 1 : 1;
-        $studentId = $prefix . str_pad($seq, 5, '0', STR_PAD_LEFT);
-
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $nameSlug  = Str::slug($data['full_name']);
-            $filename  = $studentId . '_' . $nameSlug . '.' . $request->file('image')->getClientOriginalExtension();
-            $request->file('image')->move(public_path('students'), $filename);
-            $imagePath = 'students/' . $filename;
-        }
-
-        DB::transaction(function () use ($data, $imagePath, $studentId) {
-            $student = VerifiedStudent::create([
-                'student_id'         => $studentId,
-                'nic'                => $data['id_type'] === 'NIC' ? $data['id_number'] : null,
-                'passport'           => $data['id_type'] === 'Passport' ? $data['id_number'] : null,
-                'first_name'         => $data['first_name'],
-                'last_name'          => $data['last_name'],
-                'full_name'          => $data['full_name'],
-                'date_of_birth'      => $data['date_of_birth'],
-                'email'              => $data['email'],
-                'nationality_id'     => $data['nationality_id'],
-                'gender'             => $data['gender'],
-                'phone_country_code' => $data['phone_country_code'],
-                'phone'              => $data['phone'],
-                'address'            => $data['address'],
-                'image_path'         => $imagePath,
-            ]);
-
-            $sp = StudentProgram::create([
-                'verified_student_id' => $student->id,
-                'program_slug'        => $data['program_slug'],
-                'enrollment_date'     => $data['enrollment_date'],
-                'graduation_date'     => $data['graduation_date'] ?? null,
-                'suspended_date'      => $data['suspended_date'] ?? null,
-                'status'              => $data['status'],
-            ]);
-
-            // Assign certificate if provided
-            if (!empty($data['certificate_id'])) {
-                $sp->update(['certificate_id' => $data['certificate_id']]);
-            }
-        });
+        $verifiedStudentService->create($data);
 
         return redirect()->route('admin.students.index')->with('success', 'Student added successfully.');
     }
@@ -172,14 +116,14 @@ class StudentController extends Controller
         $availableCerts = Certificate::whereDoesntHave('studentProgram')
             ->where('status', 'active')
             ->orderBy('certificate_number')
-            ->get(['id', 'certificate_number', 'program_slug'])
-            ->groupBy('program_slug')
+            ->get(['id', 'certificate_number', 'program_id'])
+            ->groupBy(fn ($certificate) => (string) $certificate->program_id)
             ->map(fn ($group) => $group->values());
 
         return Inertia::render('Admin/Students/Edit', [
             'student'                => $student,
             'nationalities'          => Nationality::orderBy('name')->get(['id', 'name']),
-            'admissions'             => Admission::where('status', 'accepted')->get(['id', 'full_name', 'email', 'program_slug']),
+            'admissions'             => Admission::with('program')->where('status', 'accepted')->get(['id', 'full_name', 'email', 'program_id']),
             'programs'               => \App\Models\Program::where('is_active', true)->orderBy('title')->get(['id', 'slug', 'title', 'level']),
             'available_certificates' => $availableCerts,
         ]);
@@ -266,7 +210,7 @@ class StudentController extends Controller
             $query->whereHas('studentPrograms', fn($q) => $q->where('status', $request->status));
         }
         if ($request->filled('programme')) {
-            $query->whereHas('studentPrograms', fn($q) => $q->where('program_slug', $request->programme));
+            $query->whereHas('studentPrograms.program', fn($q) => $q->where('slug', $request->programme));
         }
 
         $students = $query->get();
@@ -446,6 +390,8 @@ class StudentController extends Controller
         $toUpdate = []; // rows for existing students that have a new programme
         $skipped  = 0;  // exact duplicates (student + programme already exist)
 
+        $programIdBySlug = Program::query()->pluck('id', 'slug');
+
         foreach ($groups as $group) {
             $header    = $group['header'];
             $studentId = trim($header['Student ID'] ?? '');
@@ -480,14 +426,20 @@ class StudentController extends Controller
                 $allRows = array_merge([$header], $group['continuations']);
                 foreach ($allRows as $progRow) {
                     $programSlug = trim($progRow['Programme'] ?? '');
+                    $programId = $programIdBySlug[$programSlug] ?? null;
                     if (!$programSlug) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    if (!$programId) {
                         $skipped++;
                         continue;
                     }
 
                     $existingSp = StudentProgram::with('certificate')
                         ->where('verified_student_id', $existing->id)
-                        ->where('program_slug', $programSlug)
+                        ->where('program_id', $programId)
                         ->first();
 
                     if (!$existingSp) {
@@ -544,6 +496,8 @@ class StudentController extends Controller
         $updated    = 0;
 
         DB::transaction(function () use ($rows, $updateRows, &$imported, &$updated) {
+            $programIdBySlug = Program::query()->pluck('id', 'slug');
+
             // ── New students ──────────────────────────────────────────────
             $lastStudent = null;
 
@@ -609,15 +563,16 @@ class StudentController extends Controller
                 // ── Create programme for this row (header or continuation) ──
                 if ($lastStudent) {
                     $programSlug    = trim($row['Programme'] ?? '');
+                    $programId      = $programIdBySlug[$programSlug] ?? null;
                     $enrollmentDate = trim($row['Enrollment Date'] ?? '');
                     $status         = trim($row['Status'] ?? 'active');
                     $graduationDate = trim($row['Graduation Date'] ?? '') ?: null;
                     $suspensionDate = trim($row['Suspension Date'] ?? '') ?: null;
 
-                    if ($programSlug && $enrollmentDate) {
+                    if ($programId && $enrollmentDate) {
                         $sp = StudentProgram::create([
                             'verified_student_id' => $lastStudent->id,
-                            'program_slug'        => $programSlug,
+                            'program_id'          => $programId,
                             'enrollment_date'     => $enrollmentDate,
                             'graduation_date'     => $graduationDate,
                             'suspended_date'      => $suspensionDate,
@@ -646,6 +601,7 @@ class StudentController extends Controller
                                     ? (int) $row['_existing_sp_id']
                                     : null;
                 $programSlug    = trim($row['Programme'] ?? '');
+                $programId      = $programIdBySlug[$programSlug] ?? null;
                 $enrollmentDate = trim($row['Enrollment Date'] ?? '');
                 $status         = trim($row['Status'] ?? 'active');
                 $graduationDate = trim($row['Graduation Date'] ?? '') ?: null;
@@ -653,7 +609,7 @@ class StudentController extends Controller
                 $validStatus    = in_array($status, ['active', 'graduated', 'suspended']) ? $status : 'active';
                 $certNum        = trim($row['Programme Certificate'] ?? '');
 
-                if (!$programSlug || !$enrollmentDate) continue;
+                if (!$programId || !$enrollmentDate) continue;
 
                 if ($existingSpId) {
                     // Update the existing programme record
@@ -675,7 +631,7 @@ class StudentController extends Controller
                     // New programme for existing student
                     $sp = StudentProgram::create([
                         'verified_student_id' => $existingStudentId,
-                        'program_slug'        => $programSlug,
+                        'program_id'          => $programId,
                         'enrollment_date'     => $enrollmentDate,
                         'graduation_date'     => $graduationDate,
                         'suspended_date'      => $suspensionDate,

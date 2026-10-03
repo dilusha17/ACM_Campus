@@ -11,6 +11,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { HelpCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,15 +40,23 @@ interface ScholarshipFormProps {
 
 const schemes = ["Merit", "Need-based", "International", "Research"];
 
+const schemeHelp: Record<string, string> = {
+  "Merit": "Awarded for academic achievement, such as strong grades or exam results.",
+  "Need-based": "Awarded to students who can show financial hardship and could not otherwise afford the course.",
+  "International": "For students from outside the UK, to help with the higher fees international students face.",
+  "Research": "For students who plan to undertake research, or whose research background or proposal qualifies them.",
+};
+
 const ScholarshipForm = ({ defaultProgramSlug, onSubmitted }: ScholarshipFormProps) => {
   const { props } = usePage<{ programOptions: ProgramOption[] }>();
   const programs = props.programOptions ?? [];
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const defaultProgramId = programs.find((program) => program.slug === defaultProgramSlug)?.id;
 
   const { data, setData, post, processing, errors, reset } = useForm({
     full_name:               "",
     email:                   "",
-    program_slug:            defaultProgramSlug ?? "",
+    program_id:              defaultProgramId ? String(defaultProgramId) : "",
     scheme:                  "",
     annual_household_income: "",
     motivation_statement:    "",
@@ -51,7 +68,7 @@ const ScholarshipForm = ({ defaultProgramSlug, onSubmitted }: ScholarshipFormPro
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!data.program_slug || !data.scheme) {
+    if (!data.program_id || !data.scheme) {
       toast.error("Please select a programme and scholarship scheme.");
       return;
     }
@@ -90,19 +107,46 @@ const ScholarshipForm = ({ defaultProgramSlug, onSubmitted }: ScholarshipFormPro
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Programme</Label>
-            <Select value={data.program_slug} onValueChange={(v) => setData("program_slug", v)}>
+            <div className="flex items-center h-5">
+              <Label>Programme</Label>
+            </div>
+            <Select value={data.program_id} onValueChange={(value) => setData("program_id", value)}>
               <SelectTrigger><SelectValue placeholder="Select programme" /></SelectTrigger>
               <SelectContent>
                 {programs.map((p) => (
-                  <SelectItem key={p.slug} value={p.slug}>{p.title}</SelectItem>
+                  <SelectItem key={p.id} value={String(p.id)}>{p.title}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.program_slug && <p className="text-destructive text-xs">{errors.program_slug}</p>}
+            {errors.program_id && <p className="text-destructive text-xs">{errors.program_id}</p>}
           </div>
           <div className="space-y-2">
-            <Label>Scholarship Scheme</Label>
+            <div className="flex items-center gap-1.5 h-5">
+              <Label>Scholarship Scheme</Label>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button type="button" aria-label="About scholarship schemes" className="text-muted-foreground hover:text-foreground transition-colors">
+                    <HelpCircle className="h-4 w-4" />
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Scholarship Schemes</DialogTitle>
+                    <DialogDescription>
+                      Choose the scheme that best matches your situation. The committee reviews your application against its criteria.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <dl className="space-y-3 text-sm">
+                    {schemes.map((s) => (
+                      <div key={s}>
+                        <dt className="font-semibold">{s}</dt>
+                        <dd className="text-muted-foreground">{schemeHelp[s]}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </DialogContent>
+              </Dialog>
+            </div>
             <Select value={data.scheme} onValueChange={(v) => setData("scheme", v)}>
               <SelectTrigger><SelectValue placeholder="Select scheme" /></SelectTrigger>
               <SelectContent>

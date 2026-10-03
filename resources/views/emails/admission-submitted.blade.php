@@ -9,8 +9,8 @@
     <div class="label">Full Name</div><div class="value">{{ $admission->full_name }}</div>
     <div class="label">Email</div><div class="value"><a href="mailto:{{ $admission->email }}">{{ $admission->email }}</a></div>
     <div class="label">Phone</div><div class="value">{{ $admission->phone }}</div>
-    <div class="label">Nationality</div><div class="value">{{ $admission->nationality }}</div>
-    <div class="label">Programme</div><div class="value">{{ $admission->program_slug }}</div>
+    <div class="label">Nationality</div><div class="value">{{ $admission->nationality?->name }}</div>
+    <div class="label">Programme</div><div class="value">{{ $admission->program_title ?? $admission->program_slug }}</div>
     <div class="label">Education History</div><div class="msg">{{ $admission->education_history }}</div>
     @if($admission->supporting_documents)
     <div class="label">Supporting Documents</div><div class="msg">{{ $admission->supporting_documents }}</div>
