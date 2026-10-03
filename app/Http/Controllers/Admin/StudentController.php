@@ -31,7 +31,9 @@ class StudentController extends Controller
             $query->where(function ($q) use ($request) {
                 $q->where('full_name', 'like', '%' . $request->search . '%')
                   ->orWhere('student_id', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+                  ->orWhere('email', 'like', '%' . $request->search . '%')
+                  ->orWhere('nic', 'like', '%' . $request->search . '%')
+                  ->orWhere('passport', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -203,7 +205,9 @@ class StudentController extends Controller
             $query->where(function ($q) use ($request) {
                 $q->where('full_name', 'like', '%' . $request->search . '%')
                   ->orWhere('student_id', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+                  ->orWhere('email', 'like', '%' . $request->search . '%')
+                  ->orWhere('nic', 'like', '%' . $request->search . '%')
+                  ->orWhere('passport', 'like', '%' . $request->search . '%');
             });
         }
         if ($request->filled('status')) {

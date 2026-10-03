@@ -221,7 +221,7 @@ const Index = ({ students, filters, total_count, programs }: Props) => {
         <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-52">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input type="text" placeholder="Search name, ID or email…" defaultValue={filters.search}
+            <input type="text" placeholder="Search name, student ID, NIC / passport or email…" defaultValue={filters.search}
               onChange={(e) => setFilter("search", e.target.value)}
               className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#1a3a5c]/20"
             />
