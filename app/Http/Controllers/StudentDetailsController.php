@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\StudentDetailsSubmittedMail;
 use App\Models\StudentDetailRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -71,6 +73,12 @@ class StudentDetailsController extends Controller
             'image_path'   => 'student-submissions/' . $fileName,
             'submitted_at' => now(),
         ]);
+
+        try {
+            Mail::to('info@acmcampus.uk')->send(new StudentDetailsSubmittedMail($detailRequest->fresh(['program', 'scholarshipApplication'])));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return redirect()->route('student-details.show', $token);
     }

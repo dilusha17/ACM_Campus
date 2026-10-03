@@ -110,6 +110,35 @@ class StudentDetailRequest extends Model
         ];
     }
 
+    public function sourceLabel(): string
+    {
+        if ($this->admission_id) {
+            return 'Admission application #' . $this->admission_id;
+        }
+
+        if ($this->scholarship_application_id) {
+            $scheme = $this->scholarshipApplication?->scheme;
+
+            return 'Scholarship application #' . $this->scholarship_application_id . ($scheme ? " ({$scheme})" : '');
+        }
+
+        return 'Application';
+    }
+
+    public function adminUrl(): ?string
+    {
+        return match (true) {
+            (bool) $this->admission_id               => route('admin.admissions.show', $this->admission_id),
+            (bool) $this->scholarship_application_id => route('admin.scholarships.show', $this->scholarship_application_id),
+            default                                  => null,
+        };
+    }
+
+    public function scholarshipApplication()
+    {
+        return $this->belongsTo(ScholarshipApplication::class);
+    }
+
     public function program()
     {
         return $this->belongsTo(Program::class);
