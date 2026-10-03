@@ -1,6 +1,7 @@
 /node_modules
 /public/build
 /public/hot
+/public/student-submissions
 /vendor
 /.env
 /.env.backup

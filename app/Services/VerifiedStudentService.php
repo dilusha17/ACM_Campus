@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Mail\VerifiedStudentWelcomeMail;
 use App\Models\Certificate;
 use App\Models\Program;
+use App\Models\StudentDetailRequest;
 use App\Models\StudentProgram;
 use App\Models\VerifiedStudent;
 use Illuminate\Http\UploadedFile;
@@ -25,7 +26,11 @@ class VerifiedStudentService
         [$student, $studentProgram] = DB::transaction(function () use ($data) {
             $studentId = $this->buildNextStudentId(true);
             $program = Program::findOrFail($data['program_id']);
-            $imagePath = $this->storeImage($data['image'] ?? null, $studentId, $data['full_name']);
+            $detailRequest = ! empty($data['detail_request_id'])
+                ? StudentDetailRequest::whereNotNull('submitted_at')->whereNull('verified_student_id')->find($data['detail_request_id'])
+                : null;
+            $imagePath = $this->storeImage($data['image'] ?? null, $studentId, $data['full_name'])
+                ?? $this->adoptSubmittedImage($detailRequest, $studentId, $data['full_name']);
 
             $student = VerifiedStudent::create([
                 'student_id'         => $studentId,
@@ -43,6 +48,8 @@ class VerifiedStudentService
                 'address'            => $data['address'],
                 'image_path'         => $imagePath,
             ]);
+
+            $detailRequest?->update(['verified_student_id' => $student->id]);
 
             $studentProgram = StudentProgram::create([
                 'verified_student_id' => $student->id,
@@ -102,6 +109,30 @@ class VerifiedStudentService
         $sequence = $last ? ((int) substr($last, strlen($prefix))) + 1 : 1;
 
         return $prefix . str_pad($sequence, 5, '0', STR_PAD_LEFT);
+    }
+
+    private function adoptSubmittedImage(?StudentDetailRequest $detailRequest, string $studentId, string $fullName): ?string
+    {
+        if (! $detailRequest?->image_path) {
+            return null;
+        }
+
+        $source = public_path($detailRequest->image_path);
+        if (! is_file($source)) {
+            return null;
+        }
+
+        $directory = public_path('students');
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        $fileName = $studentId . '_' . Str::slug($fullName) . '.' . pathinfo($source, PATHINFO_EXTENSION);
+        rename($source, $directory . DIRECTORY_SEPARATOR . $fileName);
+
+        $detailRequest->update(['image_path' => null]);
+
+        return 'students/' . $fileName;
     }
 
     private function storeImage(?UploadedFile $image, string $studentId, string $fullName): ?string

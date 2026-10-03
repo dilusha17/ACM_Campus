@@ -65,6 +65,7 @@ export interface VerifiedStudentFormValues {
   address: string;
   program_id: string;
   admission_id: string;
+  detail_request_id: string;
   enrollment_date: string;
   graduation_date: string;
   suspended_date: string;
@@ -83,6 +84,7 @@ interface VerifiedStudentFormProps {
   submittingLabel: string;
   cancelHref?: string;
   introText?: string;
+  submittedImageUrl?: string | null;
   initialValues?: Partial<VerifiedStudentFormValues>;
 }
 
@@ -101,6 +103,7 @@ const defaultValues: VerifiedStudentFormValues = {
   address: "",
   program_id: "",
   admission_id: "",
+  detail_request_id: "",
   enrollment_date: "",
   graduation_date: "",
   suspended_date: "",
@@ -128,6 +131,7 @@ const VerifiedStudentForm = ({
   submittingLabel,
   cancelHref,
   introText,
+  submittedImageUrl,
   initialValues,
 }: VerifiedStudentFormProps) => {
   const { countryCodes } = usePage<{ countryCodes: CountryCode[] }>().props;
@@ -369,7 +373,7 @@ const VerifiedStudentForm = ({
         </div>
         <div className="p-6">
           <Field label="" error={errors.image}>
-            <ImageCropper aspectRatio={1} maxSizeMb={5} onChange={(file) => setData("image", file)} label="" />
+            <ImageCropper aspectRatio={1} maxSizeMb={5} currentUrl={submittedImageUrl} onChange={(file) => setData("image", file)} label="" />
             {uploadProgress !== null && (
               <div className="mt-3 space-y-1.5">
                 <div className="flex justify-between text-xs text-gray-500">

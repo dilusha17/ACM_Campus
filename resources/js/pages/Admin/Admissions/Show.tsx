@@ -3,6 +3,7 @@ import AdminLayout from "@/layouts/AdminLayout";
 import { ChevronLeft, UserPlus, ChevronDown, ChevronUp } from "lucide-react";
 import VerifiedStudentForm, {
   AvailableCertificate,
+  VerifiedStudentFormValues,
   VerifiedStudentNationality,
   VerifiedStudentProgram,
 } from "@/components/admin/VerifiedStudentForm";
@@ -28,6 +29,16 @@ interface Admission {
   declaration_accepted: boolean; status: string; created_at: string;
 }
 
+interface DetailRequest {
+  id: number;
+  submitted: boolean;
+  expired: boolean;
+  expires_at: string;
+  already_enrolled: boolean;
+  values: Partial<VerifiedStudentFormValues> | null;
+  image_url: string | null;
+}
+
 const splitFullName = (fullName: string) => {
   const [firstName = "", ...rest] = fullName.trim().split(/\s+/);
   return {
@@ -49,8 +60,10 @@ const Show = ({
   programs,
   next_student_id,
   available_certificates,
+  detail_request,
 }: {
   admission: Admission;
+  detail_request: DetailRequest | null;
   nationalities: VerifiedStudentNationality[];
   programs: VerifiedStudentProgram[];
   next_student_id: string;
@@ -139,6 +152,18 @@ const Show = ({
           </form>
         </div>
 
+        {(admission.status === "accepted" || data.status === "accepted") && detail_request && (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-700">
+            {detail_request.submitted
+              ? detail_request.already_enrolled
+                ? "The applicant submitted their student details, and a student record was created from them."
+                : "The applicant has submitted their student details. They are pre-filled below."
+              : detail_request.expired
+                ? "The student-details link expired without a response. Set the status to another value and back to Accepted to send a new link."
+                : `Waiting for the applicant to complete the student-details form (link valid until ${detail_request.expires_at}).`}
+          </div>
+        )}
+
         {/* Create Student Record — shown when status is accepted */}
         {(admission.status === "accepted" || data.status === "accepted") && (
           <div className="bg-white rounded-2xl border border-[#1a3a5c]/15 overflow-hidden">
@@ -165,7 +190,10 @@ const Show = ({
                     submitUrl="/admin/students"
                     submitLabel="Create Student Record"
                     submittingLabel="Creating..."
-                    introText="Some fields were pre-filled from the admission. Complete the remaining details to create the verified student record."
+                    introText={detail_request?.submitted
+                      ? "Pre-filled from the admission and the details form the applicant submitted. Review them, then complete enrolment details."
+                      : "Some fields were pre-filled from the admission. Complete the remaining details to create the verified student record."}
+                    submittedImageUrl={detail_request?.image_url}
                     initialValues={{
                       first_name,
                       last_name,
@@ -174,8 +202,10 @@ const Show = ({
                       nationality_id: admission.nationality_id ? String(admission.nationality_id) : "",
                       phone_country_code: admission.phone_country_code ?? "",
                       phone: admission.phone.replace(/\D/g, ""),
+                      ...(detail_request?.values ?? {}),
                       program_id: String(admission.program_id),
                       admission_id: String(admission.id),
+                      detail_request_id: detail_request?.submitted && !detail_request.already_enrolled ? String(detail_request.id) : "",
                       status: "active",
                     }}
                   />

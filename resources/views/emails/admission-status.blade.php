@@ -16,58 +16,8 @@
       <p>We are delighted to inform you that your application for the <strong>{{ $admission->program_title ?? $admission->program_slug }}</strong> programme has been <strong>accepted</strong>!</p>
       <span class="badge badge-accepted">Accepted</span>
 
-      <p>To complete your enrolment and create your student profile, please reply to this email or contact us at <a href="mailto:info@acmcampus.uk">info@acmcampus.uk</a> with the following details:</p>
+      @include('emails.partials.student-details-request')
 
-      <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px">
-        <tr style="background:#f0f4f8">
-          <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold;width:40%">First Name</td>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">As on your official ID</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">Last Name</td>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">As on your official ID</td>
-        </tr>
-        <tr style="background:#f0f4f8">
-          <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">Full Legal Name</td>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">As it should appear on your student record</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">NIC / Passport No.</td>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">National ID card number or passport number</td>
-        </tr>
-        <tr style="background:#f0f4f8">
-          <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">Email Address</td>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">Your preferred contact email</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">Date of Birth</td>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">DD / MM / YYYY</td>
-        </tr>
-        <tr style="background:#f0f4f8">
-          <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">Nationality</td>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">Country of citizenship</td>
-        </tr>
-        <tr style="background:#f0f4f8">
-          <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">Gender</td>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">Male / Female / Other</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">Contact Number</td>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">Including country code</td>
-        </tr>
-        <tr style="background:#f0f4f8">
-          <td style="padding:8px 12px;border:1px solid #dde3ea;font-weight:bold">Home Address</td>
-          <td style="padding:8px 12px;border:1px solid #dde3ea;color:#555">Full postal address</td>
-        </tr>
-      </table>
-
-      <p>Please also attach the following documents to your reply:</p>
-      <ul style="font-size:14px;color:#444;line-height:1.9;margin:8px 0 16px 0;padding-left:20px">
-        <li><strong>Profile Photo</strong> — Clear passport-style photo (JPEG or PNG, max 5 MB)</li>
-        <li><strong>Copy of NIC / Passport</strong> — Scanned copy of your valid national ID card or passport</li>
-      </ul>
-
-      <p>Once we receive your details, our team will set up your student profile and send you your unique Student ID along with further enrolment instructions.</p>
       <p>We look forward to welcoming you to Ashuvedya Complementary Medicine Campus.</p>
 
     @elseif($newStatus === 'rejected')

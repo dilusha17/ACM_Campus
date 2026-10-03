@@ -7,6 +7,7 @@ use App\Mail\AdmissionStatusMail;
 use App\Models\Admission;
 use App\Models\Certificate;
 use App\Models\Nationality;
+use App\Models\StudentDetailRequest;
 use App\Models\Program;
 use App\Services\VerifiedStudentService;
 use Illuminate\Http\Request;
@@ -77,6 +78,7 @@ class AdmissionController extends Controller
                 'status' => $admission->status,
                 'created_at' => $admission->created_at,
             ],
+            'detail_request' => StudentDetailRequest::adminPayload(StudentDetailRequest::with('countryCode')->where('admission_id', $admission->id)->latest()->first()),
             'nationalities' => Nationality::orderBy('name')->get(['id', 'name']),
             'programs' => Program::where('is_active', true)->orderBy('title')->get(['id', 'slug', 'title', 'level']),
             'next_student_id' => $verifiedStudentService->nextStudentId(),
@@ -94,8 +96,17 @@ class AdmissionController extends Controller
         $admission->update(['status' => $newStatus]);
 
         if ($oldStatus !== $newStatus) {
+            $detailRequest = null;
+            if ($newStatus === 'accepted') {
+                try {
+                    $detailRequest = StudentDetailRequest::issueFor($admission);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+
             try {
-                Mail::to($admission->email)->send(new AdmissionStatusMail($admission->loadMissing('program'), $newStatus));
+                Mail::to($admission->email)->send(new AdmissionStatusMail($admission->loadMissing('program'), $newStatus, $detailRequest));
             } catch (\Throwable $e) {
                 report($e);
 

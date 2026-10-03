@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdmissionController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ScholarshipController;
+use App\Http\Controllers\StudentDetailsController;
 use App\Http\Controllers\VerifyController;
 use App\Http\Controllers\Admin;
 use App\Models\Program;
@@ -55,6 +56,10 @@ Route::post('/verify', [VerifyController::class, 'search'])->name('verify.search
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 Route::post('/admissions', [AdmissionController::class, 'store'])->name('admissions.store');
 Route::post('/scholarships', [ScholarshipController::class, 'store'])->name('scholarships.store');
+
+// Applicant student-details form (emailed link)
+Route::get('/student-details/{token}', [StudentDetailsController::class, 'show'])->middleware('throttle:30,1')->name('student-details.show');
+Route::post('/student-details/{token}', [StudentDetailsController::class, 'store'])->middleware('throttle:10,1')->name('student-details.store');
 
 // Admin authentication
 Route::get('/admin/login', [Admin\AuthController::class, 'showLogin'])->name('admin.login');

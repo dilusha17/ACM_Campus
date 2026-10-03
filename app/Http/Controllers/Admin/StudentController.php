@@ -91,6 +91,7 @@ class StudentController extends Controller
             'address'            => 'required|string|max:500',
             'program_id'         => 'required|integer|exists:programs,id',
             'admission_id'       => 'nullable|integer|exists:admissions,id',
+            'detail_request_id'  => 'nullable|integer|exists:student_detail_requests,id',
             'enrollment_date'    => 'required|date',
             'graduation_date'    => 'nullable|date|required_if:status,graduated',
             'suspended_date'     => 'nullable|date|required_if:status,suspended',

@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Admission;
+use App\Models\StudentDetailRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -16,6 +17,7 @@ class AdmissionStatusMail extends Mailable
     public function __construct(
         public Admission $admission,
         public string $newStatus,
+        public ?StudentDetailRequest $detailRequest = null,
     ) {}
 
     public function envelope(): Envelope

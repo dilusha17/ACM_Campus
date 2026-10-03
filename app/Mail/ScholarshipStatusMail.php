@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\ScholarshipApplication;
+use App\Models\StudentDetailRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -16,6 +17,7 @@ class ScholarshipStatusMail extends Mailable
     public function __construct(
         public ScholarshipApplication $application,
         public string $newStatus,
+        public ?StudentDetailRequest $detailRequest = null,
     ) {}
 
     public function envelope(): Envelope

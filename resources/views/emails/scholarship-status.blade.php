@@ -15,6 +15,8 @@
     @elseif($newStatus === 'approved')
       <p>We are thrilled to inform you that your <strong>{{ $application->scheme }}</strong> scholarship application for the <strong>{{ $application->program_title ?? $application->program_slug }}</strong> programme has been <strong>approved</strong>!</p>
       <span class="badge badge-approved">Approved</span>
+      @include('emails.partials.student-details-request')
+
       <p>A member of our team will be in touch shortly to discuss next steps and the formal scholarship award letter.</p>
       <p>Congratulations, and welcome to ACM Campus!</p>
 
