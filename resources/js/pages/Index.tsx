@@ -39,7 +39,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="inline-block bg-accent/20 text-accent backdrop-blur-sm px-4 py-1.5 rounded-full font-body text-sm font-medium mb-6"
+              className="inline-block bg-accent/20 text-accent backdrop-blur-xs px-4 py-1.5 rounded-full font-body text-sm font-medium mb-6"
             >
               Founded 2017 · United Kingdom
             </motion.span>

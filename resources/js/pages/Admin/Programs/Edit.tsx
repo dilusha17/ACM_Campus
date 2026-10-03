@@ -338,7 +338,7 @@ const Edit = ({ program }: { program: Program }) => {
             <button
               type="submit"
               disabled={processing}
-              className="bg-[#1a3a5c] text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 disabled:opacity-60 transition-colors shadow-sm"
+              className="bg-[#1a3a5c] text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 disabled:opacity-60 transition-colors shadow-xs"
             >
               {processing ? "Saving…" : "Save Changes"}
             </button>

@@ -56,7 +56,7 @@ const StatCard = ({
     href={href}
     className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
   >
-    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${gradient} shadow-sm`}>
+    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${gradient} shadow-xs`}>
       <Icon size={21} className="text-white" />
     </div>
     <div className="min-w-0">
@@ -91,19 +91,19 @@ const Dashboard = ({ stats, recentAdmissions, recentScholarships, recentContacts
       <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           label="Pending Admissions" value={stats.pendingAdmissions} sub={stats.totalAdmissions}
-          icon={FileText} href="/admin/admissions" gradient="bg-gradient-to-br from-blue-500 to-blue-600"
+          icon={FileText} href="/admin/admissions" gradient="bg-linear-to-br from-blue-500 to-blue-600"
         />
         <StatCard
           label="Pending Scholarships" value={stats.pendingScholarships} sub={stats.totalScholarships}
-          icon={Award} href="/admin/scholarships" gradient="bg-gradient-to-br from-amber-500 to-amber-600"
+          icon={Award} href="/admin/scholarships" gradient="bg-linear-to-br from-amber-500 to-amber-600"
         />
         <StatCard
           label="New Contacts" value={stats.newContacts}
-          icon={MessageSquare} href="/admin/contacts" gradient="bg-gradient-to-br from-violet-500 to-violet-600"
+          icon={MessageSquare} href="/admin/contacts" gradient="bg-linear-to-br from-violet-500 to-violet-600"
         />
         <StatCard
           label="Verified Students" value={stats.totalStudents}
-          icon={Users} href="/admin/students" gradient="bg-gradient-to-br from-teal-500 to-teal-600"
+          icon={Users} href="/admin/students" gradient="bg-linear-to-br from-teal-500 to-teal-600"
         />
       </div>
 

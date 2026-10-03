@@ -16,7 +16,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a3a5c] via-[#1e4470] to-[#0f2440] flex items-center justify-center p-4 font-body relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-br from-[#1a3a5c] via-[#1e4470] to-[#0f2440] flex items-center justify-center p-4 font-body relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute -top-32 -left-32 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
@@ -25,7 +25,7 @@ const Login = () => {
       <div className="w-full max-w-sm relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-2xl">
+          <div className="w-16 h-16 bg-white/15 backdrop-blur-xs border border-white/20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-2xl">
             <span className="text-white font-bold text-2xl select-none">A</span>
           </div>
           <h1 className="text-white text-2xl font-bold tracking-tight">ACM Campus</h1>
@@ -56,7 +56,7 @@ const Login = () => {
                   value={data.email}
                   onChange={(e) => setData("email", e.target.value)}
                   placeholder="admin@acmcampus.uk"
-                  className="w-full border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/25 focus:border-[#1a3a5c]/40 transition-all placeholder:text-gray-300"
+                  className="w-full border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#1a3a5c]/25 focus:border-[#1a3a5c]/40 transition-all placeholder:text-gray-300"
                 />
               </div>
               {errors.email && (
@@ -82,7 +82,7 @@ const Login = () => {
                   value={data.password}
                   onChange={(e) => setData("password", e.target.value)}
                   placeholder="••••••••"
-                  className="w-full border border-gray-200 rounded-xl pl-9 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/25 focus:border-[#1a3a5c]/40 transition-all placeholder:text-gray-300"
+                  className="w-full border border-gray-200 rounded-xl pl-9 pr-10 py-2.5 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#1a3a5c]/25 focus:border-[#1a3a5c]/40 transition-all placeholder:text-gray-300"
                 />
                 <button
                   type="button"

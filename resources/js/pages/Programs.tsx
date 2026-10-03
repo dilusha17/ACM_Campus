@@ -77,7 +77,7 @@ const Programs = () => {
                 transition={{ delay: i * 0.04 }}
               >
                 <Card className="overflow-hidden h-full flex flex-col border-border shadow-soft hover:shadow-card-hover transition-all group">
-                  <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                  <div className="relative aspect-16/10 overflow-hidden bg-muted">
                     {p.image ? (
                       <img
                         src={p.image}

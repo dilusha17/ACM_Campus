@@ -386,7 +386,7 @@ const VerifiedStudentForm = ({
       <input type="hidden" value={data.admission_id} readOnly name="admission_id" />
 
       <div className="bg-white rounded-2xl border border-gray-100 px-6 py-4 flex gap-3">
-        <button type="submit" disabled={processing} className="bg-[#1a3a5c] text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 disabled:opacity-60 transition-colors shadow-sm">
+        <button type="submit" disabled={processing} className="bg-[#1a3a5c] text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#1a3a5c]/90 disabled:opacity-60 transition-colors shadow-xs">
           {processing ? submittingLabel : submitLabel}
         </button>
         {cancelHref && (

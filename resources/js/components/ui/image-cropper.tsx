@@ -180,7 +180,7 @@ export function ImageCropper({
           <button
             type="button"
             onClick={handleRemove}
-            className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow hover:bg-red-600 transition-colors"
+            className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-sm hover:bg-red-600 transition-colors"
           >
             <X size={12} />
           </button>

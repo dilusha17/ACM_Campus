@@ -132,7 +132,7 @@ const Show = ({
             <button
               type="submit"
               disabled={processing}
-              className="bg-[#1a3a5c] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#1a3a5c]/90 transition-colors disabled:opacity-60 shadow-sm"
+              className="bg-[#1a3a5c] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#1a3a5c]/90 transition-colors disabled:opacity-60 shadow-xs"
             >
               {processing ? "Saving…" : "Save Changes"}
             </button>
