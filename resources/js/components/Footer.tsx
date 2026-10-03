@@ -1,6 +1,13 @@
 import { Link } from "@inertiajs/react";
 import { Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 
+const partners = [
+  { src: "/assets/partners/01.jpeg", name: "International Association of Universities" },
+  { src: "/assets/partners/02.jpeg", name: "University Grants Commission Recognised" },
+  { src: "/assets/partners/03.jpeg", name: "World Education Services" },
+  { src: "/assets/partners/04.jpeg", name: "Charisma University USA" },
+];
+
 const Footer = () => {
   return (
     <footer className="bg-primary text-primary-foreground">
@@ -66,6 +73,22 @@ const Footer = () => {
                 </a>
               ))}
             </div>
+          </div>
+        </div>
+
+        <div className="border-t border-primary-foreground/20 mt-12 pt-8">
+          <h4 className="font-display font-semibold text-lg mb-6 text-center">Our Partners & Recognitions</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+            {partners.map((partner) => (
+              <div key={partner.src} className="bg-white rounded-xl aspect-[3/2] flex items-center justify-center p-3">
+                <img
+                  src={partner.src}
+                  alt={partner.name}
+                  loading="lazy"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            ))}
           </div>
         </div>
 

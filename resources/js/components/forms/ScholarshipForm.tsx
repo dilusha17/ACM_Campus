@@ -85,7 +85,7 @@ const ScholarshipForm = ({ defaultProgramSlug, onSubmitted }: ScholarshipFormPro
         reset();
         onSubmitted?.();
       },
-      onError: () => toast.error("Something went wrong. Please try again."),
+      onError: (errs) => toast.error(Object.values(errs)[0] ?? "Something went wrong. Please try again."),
     });
   };
 

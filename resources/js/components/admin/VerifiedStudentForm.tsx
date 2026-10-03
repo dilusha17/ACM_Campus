@@ -163,7 +163,7 @@ const VerifiedStudentForm = ({
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-50">
-          <h2 className="font-semibold text-gray-800 text-sm">Student Information</h2>
+          <h2 className="font-semibold text-gray-800 text-sm">Student Informations</h2>
         </div>
 
         <div className="p-6 grid sm:grid-cols-2 gap-5">
@@ -247,18 +247,20 @@ const VerifiedStudentForm = ({
             </Select>
           </Field>
 
-          <div className="sm:col-span-2 space-y-1.5">
-            <Label className="text-sm font-medium text-gray-700">Mobile <span className="text-red-500">*</span></Label>
-            <div className="flex gap-2">
-              <div className="w-64 shrink-0">
-                <Combobox
-                  options={dialCodeOptions(countryCodes)}
-                  value={data.phone_country_code}
-                  onChange={(value) => setData("phone_country_code", value)}
-                  placeholder="Country code..."
-                  searchPlaceholder="Search country..."
-                />
-              </div>
+          <div className="sm:col-span-2 grid sm:grid-cols-[16rem_1fr] gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">Country <span className="text-red-500">*</span></Label>
+              <Combobox
+                options={dialCodeOptions(countryCodes)}
+                value={data.phone_country_code}
+                onChange={(v) => setData("phone_country_code", v)}
+                placeholder="Select country..."
+                searchPlaceholder="Search country..."
+              />
+              {errors.phone_country_code && <p className="text-red-500 text-xs">{errors.phone_country_code}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">Phone Number <span className="text-red-500">*</span></Label>
               <Input
                 required
                 inputMode="numeric"
@@ -266,11 +268,10 @@ const VerifiedStudentForm = ({
                 value={data.phone}
                 onChange={(e) => setData("phone", e.target.value.replace(/\D/g, ""))}
                 placeholder="Digits only"
-                className="rounded-xl border-gray-200 flex-1"
+                className="rounded-xl border-gray-200"
               />
+              {errors.phone && <p className="text-red-500 text-xs">{errors.phone}</p>}
             </div>
-            {errors.phone_country_code && <p className="text-red-500 text-xs">{errors.phone_country_code}</p>}
-            {errors.phone && <p className="text-red-500 text-xs">{errors.phone}</p>}
           </div>
 
           <div className="sm:col-span-2">

@@ -95,13 +95,14 @@ const Index = ({ admissions, filters, total_applications }: Props) => {
 
         {/* Table */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <table className="w-full text-sm table-fixed">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[56rem] text-sm table-fixed">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60">
                   {["Name","Email","Programme","Nationality","Status","Date",""].map((h) => (
                     <th
                       key={h}
-                      className={`text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider ${h === "Name" ? "w-[20%]" : ""} ${h === "Email" ? "w-[22%]" : ""} ${h === "Programme" ? "w-[20%]" : ""} ${h === "Nationality" ? "w-[14%]" : ""} ${h === "Status" ? "w-[10%]" : ""} ${h === "Date" ? "w-[10%]" : ""} ${h === "" ? "w-[4rem]" : ""}`}
+                      className={`text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider ${h === "Name" ? "w-[18%]" : ""} ${h === "Email" ? "w-[22%]" : ""} ${h === "Programme" ? "w-[20%]" : ""} ${h === "Nationality" ? "w-[12%]" : ""} ${h === "Status" ? "w-[11%]" : ""} ${h === "Date" ? "w-[11%]" : ""} ${h === "" ? "w-20" : ""}`}
                     >
                       {h}
                     </th>
@@ -137,6 +138,7 @@ const Index = ({ admissions, filters, total_applications }: Props) => {
                 )}
               </tbody>
             </table>
+          </div>
         </div>
 
         {/* Pagination */}
