@@ -36,7 +36,7 @@ interface Admission {
 }
 
 interface Props {
-  admissions: { data: Admission[]; links: any[]; meta: any };
+  admissions: { data: Admission[]; links: any[]; last_page: number; total: number };
   filters: { status?: string; search?: string };
   total_applications: number;
 }
@@ -56,7 +56,7 @@ const Index = ({ admissions, filters, total_applications }: Props) => {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Admissions</h1>
-            <p className="text-gray-500 text-sm mt-1">{total_applications ?? admissions.meta?.total ?? 0} total applications</p>
+            <p className="text-gray-500 text-sm mt-1">{total_applications ?? admissions.total ?? 0} total applications</p>
           </div>
           <button
             type="button"
@@ -142,7 +142,7 @@ const Index = ({ admissions, filters, total_applications }: Props) => {
         </div>
 
         {/* Pagination */}
-        {admissions.meta?.last_page > 1 && (
+        {admissions.last_page > 1 && (
           <div className="flex gap-1.5 justify-center flex-wrap">
             {admissions.links.map((link: any, i: number) => (
               <Link

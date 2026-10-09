@@ -1,6 +1,6 @@
 import { Link, router } from "@inertiajs/react";
 import AdminLayout from "@/layouts/AdminLayout";
-import { Plus, ShieldCheck, ShieldOff, Search } from "lucide-react";
+import { Plus, ShieldCheck, ShieldOff, Search, Eye, Pencil } from "lucide-react";
 import { useState } from "react";
 import {
   AlertDialog,
@@ -12,6 +12,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -26,6 +33,7 @@ interface Certificate {
   program_slug: string;
   program_title: string;
   issue_date: string;
+  certificate_sample: string | null;
   level: string;
   status: string;
   assigned: boolean;
@@ -36,7 +44,8 @@ interface Props {
   certificates: {
     data: Certificate[];
     links: any[];
-    meta: any;
+    last_page: number;
+    total: number;
   };
   filters?: { search?: string; status?: string; assigned?: string };
 }
@@ -45,6 +54,7 @@ const Index = ({ certificates, filters }: Props) => {
   const [revokeTarget, setRevokeTarget]       = useState<Certificate | null>(null);
   const [reinstateTarget, setReinstateTarget] = useState<Certificate | null>(null);
   const [search, setSearch] = useState(filters?.search ?? "");
+  const [previewTarget, setPreviewTarget]     = useState<Certificate | null>(null);
 
   const setFilter = (key: string, value: string) =>
     router.get(
@@ -83,7 +93,7 @@ const Index = ({ certificates, filters }: Props) => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Certificates</h1>
             <p className="text-gray-400 text-sm mt-0.5">
-              {certificates.meta?.total ?? 0} certificate{(certificates.meta?.total ?? 0) !== 1 ? "s" : ""} issued
+              {certificates.total ?? 0} certificate{(certificates.total ?? 0) !== 1 ? "s" : ""} issued
             </p>
           </div>
           <Link
@@ -137,8 +147,8 @@ const Index = ({ certificates, filters }: Props) => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-50 bg-gray-50/60">
-                  {["Certificate No.", "Programme", "Level", "Issue Date", "Status", ""].map((h, i) => (
-                    <th key={i} className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  {["Certificate No.", "Programme", "Level", "Issue Date", "Status", "Actions"].map((h, i) => (
+                    <th key={i} className={`px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap ${h === "Actions" ? "text-right" : "text-left"}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -176,6 +186,23 @@ const Index = ({ certificates, filters }: Props) => {
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewTarget(cert)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-[#1a3a5c] hover:bg-gray-100 transition-colors"
+                          title="Preview certificate"
+                          aria-label="Preview certificate"
+                        >
+                          <Eye size={15} />
+                        </button>
+                        <Link
+                          href={`/admin/certificates/${cert.id}/edit`}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-[#1a3a5c] hover:bg-gray-100 transition-colors"
+                          title="Edit certificate"
+                          aria-label="Edit certificate"
+                        >
+                          <Pencil size={15} />
+                        </Link>
                         {cert.status === "active" ? (
                           <button
                             onClick={() => setRevokeTarget(cert)}
@@ -203,7 +230,7 @@ const Index = ({ certificates, filters }: Props) => {
         </div>
 
         {/* Pagination */}
-        {certificates.meta?.last_page > 1 && (
+        {certificates.last_page > 1 && (
           <div className="flex gap-1.5 justify-center flex-wrap">
             {certificates.links.map((link: any, i: number) => (
               <Link
@@ -267,6 +294,53 @@ const Index = ({ certificates, filters }: Props) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview dialog */}
+      <Dialog open={previewTarget !== null} onOpenChange={(o) => !o && setPreviewTarget(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-mono text-base">{previewTarget?.certificate_number}</DialogTitle>
+            <DialogDescription>
+              {previewTarget?.program_title}
+              {previewTarget ? ` · ${previewTarget.level}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {previewTarget?.certificate_sample ? (
+            <img
+              src={`/${previewTarget.certificate_sample}`}
+              alt={`Sample of certificate ${previewTarget.certificate_number}`}
+              className="w-full rounded-lg border border-gray-200 bg-white object-contain"
+            />
+          ) : (
+            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 py-12 text-center text-sm text-gray-500">
+              No sample image uploaded for this certificate.
+              {previewTarget && (
+                <div className="mt-3">
+                  <Link href={`/admin/certificates/${previewTarget.id}/edit`} className="text-[#1a3a5c] font-medium hover:underline">
+                    Upload one in Edit
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+          {previewTarget && (
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-gray-400">Issue Date</dt>
+                <dd className="text-gray-800">{new Date(previewTarget.issue_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-gray-400">Status</dt>
+                <dd className="text-gray-800">{previewTarget.status === "active" ? "Active" : "Revoked"}</dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-xs uppercase tracking-wide text-gray-400">Assigned Student</dt>
+                <dd className="text-gray-800">{previewTarget.student ? `${previewTarget.student.full_name} — ${previewTarget.student.student_id}` : "Not assigned"}</dd>
+              </div>
+            </dl>
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

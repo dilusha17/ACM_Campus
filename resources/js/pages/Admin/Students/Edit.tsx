@@ -58,10 +58,19 @@ interface AvailableCert {
   program_id: number;
 }
 
+interface Registration {
+  type: "admission" | "scholarship" | "manual";
+  id?: number;
+  label?: string;
+  status?: string;
+  url?: string;
+}
+
 interface StudentProgramRow {
   id: number;
+  registration: Registration;
   program_id: number;
-  program_slug: string;
+  program_slug: string | null;
   admission_id: number | null;
   enrollment_date: string;
   graduation_date: string | null;
@@ -742,7 +751,7 @@ const Edit = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-medium text-gray-800 text-sm">
-                        {sp.program?.title ?? sp.program_slug}
+                        {sp.program?.title ?? sp.program_slug ?? "Programme not recorded"}
                       </p>
                       <span
                         className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -751,6 +760,26 @@ const Edit = ({
                       >
                         {sp.status.charAt(0).toUpperCase() + sp.status.slice(1)}
                       </span>
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
+                      <span>Registered via:</span>
+                      {sp.registration?.type === "manual" || !sp.registration ? (
+                        <span className="text-gray-400">Added manually</span>
+                      ) : (
+                        <Link
+                          href={sp.registration.url ?? "#"}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium ring-1 hover:opacity-80 transition-opacity ${
+                            sp.registration.type === "admission"
+                              ? "bg-blue-50 text-blue-700 ring-blue-200/80"
+                              : "bg-violet-50 text-violet-700 ring-violet-200/80"
+                          }`}
+                        >
+                          {sp.registration.label}
+                          {sp.registration.status && (
+                            <span className="opacity-70">· {sp.registration.status.charAt(0).toUpperCase() + sp.registration.status.slice(1)}</span>
+                          )}
+                        </Link>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-gray-500">
                       <span>Enrolled: {sp.enrollment_date ? sp.enrollment_date.slice(0, 10) : "—"}</span>

@@ -26,7 +26,7 @@ interface Inquiry {
 }
 
 interface Props {
-  inquiries: { data: Inquiry[]; links: any[]; meta: any };
+  inquiries: { data: Inquiry[]; links: any[]; last_page: number; total: number };
   filters: { status?: string; search?: string };
 }
 
@@ -39,7 +39,7 @@ const Index = ({ inquiries, filters }: Props) => {
       <div className="space-y-6 max-w-7xl">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Contact Inquiries</h1>
-          <p className="text-gray-500 text-sm mt-1">{inquiries.meta?.total ?? 0} total inquiries</p>
+          <p className="text-gray-500 text-sm mt-1">{inquiries.total ?? 0} total inquiries</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-wrap gap-3">
@@ -104,7 +104,7 @@ const Index = ({ inquiries, filters }: Props) => {
           </div>
         </div>
 
-        {inquiries.meta?.last_page > 1 && (
+        {inquiries.last_page > 1 && (
           <div className="flex gap-1.5 justify-center flex-wrap">
             {inquiries.links.map((link: any, i: number) => (
               <Link key={i} href={link.url ?? "#"} preserveState

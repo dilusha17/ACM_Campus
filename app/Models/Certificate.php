@@ -17,6 +17,7 @@ class Certificate extends Model
         'issue_date',
         'level',
         'status',
+        'certificate_sample',
         'metadata',
     ];
 

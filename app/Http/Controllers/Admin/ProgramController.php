@@ -18,8 +18,10 @@ class ProgramController extends Controller
         $query = Program::query();
 
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%')
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
                   ->orWhere('slug', 'like', '%' . $request->search . '%');
+            });
         }
 
         if ($request->filled('level')) {
@@ -27,7 +29,7 @@ class ProgramController extends Controller
         }
 
         return Inertia::render('Admin/Programs/Index', [
-            'programs' => $query->orderBy('level')->orderBy('title')->get(),
+            'programs' => $query->orderByDesc('is_active')->orderBy('level')->orderBy('title')->paginate(15)->withQueryString(),
             'filters'  => $request->only(['search', 'level']),
         ]);
     }

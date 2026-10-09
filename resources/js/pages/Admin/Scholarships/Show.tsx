@@ -207,6 +207,7 @@ const Show = ({
                       email: application.email,
                       ...(detail_request?.values ?? {}),
                       program_id: String(application.program_id),
+                      scholarship_application_id: String(application.id),
                       detail_request_id: detail_request?.submitted && !detail_request.already_enrolled ? String(detail_request.id) : "",
                       status: "active",
                     }}

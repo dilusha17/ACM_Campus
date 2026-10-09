@@ -35,7 +35,8 @@ const StatusBadge = ({ status }: { status: string }) => (
 );
 
 interface StudentProgram {
-  program_slug: string;
+  program_slug: string | null;
+  program_title: string | null;
   status: string;
   enrollment_date: string;
 }
@@ -55,7 +56,14 @@ interface Program {
 }
 
 interface Props {
-  students: { data: Student[]; links: any[]; meta: any };
+  students: {
+    data: Student[];
+    links: any[];
+    last_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+  };
   filters: { status?: string; search?: string; programme?: string };
   total_count: number;
   programs: Program[];
@@ -252,12 +260,21 @@ const Index = ({ students, filters, total_count, programs }: Props) => {
 
         {/* Table */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div>
+            <table className="w-full text-sm table-fixed">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60">
-                  {["photo","Student ID","Name","Email","Programme","Status","Enrolled","actions"].map((h, i) => (
-                    <th key={i} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h === "photo" || h === "actions" ? "" : h}</th>
+                  {[
+                    { label: "", width: "w-16" },
+                    { label: "Student ID", width: "w-[12%]" },
+                    { label: "Name", width: "w-[16%]" },
+                    { label: "Email", width: "w-[21%]" },
+                    { label: "Programme", width: "w-[17%]" },
+                    { label: "Status", width: "w-[9%]" },
+                    { label: "Enrolled", width: "w-[10%]" },
+                    { label: "", width: "w-24" },
+                  ].map((h, i) => (
+                    <th key={i} className={`text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider truncate ${h.width}`}>{h.label}</th>
                   ))}
                 </tr>
               </thead>
@@ -273,7 +290,7 @@ const Index = ({ students, filters, total_count, programs }: Props) => {
                     const primaryProgram = s.student_programs?.[0];
                     return (
                       <tr key={s.id} className="hover:bg-gray-50/70 transition-colors">
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3">
                           {s.image_path ? (
                             <img
                               src={`/${s.image_path}`}
@@ -286,23 +303,23 @@ const Index = ({ students, filters, total_count, programs }: Props) => {
                             </div>
                           )}
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="font-mono text-xs text-gray-600 bg-gray-50 px-2 py-0.5 rounded">{s.student_id}</span>
+                        <td className="px-3 py-3">
+                          <span className="font-mono text-xs text-gray-600 bg-gray-50 px-2 py-0.5 rounded block truncate">{s.student_id}</span>
                         </td>
-                        <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{s.full_name}</td>
-                        <td className="px-4 py-3 text-gray-500">{s.email}</td>
-                        <td className="px-4 py-3 text-gray-500 max-w-36">
-                          <p className="truncate">{primaryProgram?.program_slug ?? "—"}</p>
+                        <td className="px-3 py-3 font-medium text-gray-800"><p className="truncate" title={s.full_name}>{s.full_name}</p></td>
+                        <td className="px-3 py-3 text-gray-500"><p className="truncate" title={s.email}>{s.email}</p></td>
+                        <td className="px-3 py-3 text-gray-500">
+                          <p className="truncate" title={primaryProgram?.program_title ?? undefined}>{primaryProgram?.program_title ?? primaryProgram?.program_slug ?? "—"}</p>
                           {s.student_programs?.length > 1 && (
                             <p className="text-xs text-gray-400">+{s.student_programs.length - 1} more</p>
                           )}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3">
                           <StatusBadge status={primaryProgram?.status ?? "active"} />
                         </td>
-                        <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{primaryProgram?.enrollment_date ? primaryProgram.enrollment_date.slice(0, 10) : "—"}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
+                        <td className="px-3 py-3 text-gray-400 truncate">{primaryProgram?.enrollment_date ? primaryProgram.enrollment_date.slice(0, 10) : "—"}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-1">
                             <Link
                               href={`/admin/students/${s.id}/edit`}
                               className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#1a3a5c] transition-colors"
@@ -328,7 +345,9 @@ const Index = ({ students, filters, total_count, programs }: Props) => {
           </div>
         </div>
 
-        {students.meta?.last_page > 1 && (
+        {students.last_page > 1 && (
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-xs text-gray-400">Showing {students.from}–{students.to} of {students.total}</p>
           <div className="flex gap-1.5 justify-center flex-wrap">
             {students.links.map((link: any, i: number) => (
               <Link key={i} href={link.url ?? "#"} preserveState
@@ -338,6 +357,7 @@ const Index = ({ students, filters, total_count, programs }: Props) => {
                 dangerouslySetInnerHTML={{ __html: link.label }}
               />
             ))}
+          </div>
           </div>
         )}
       </div>

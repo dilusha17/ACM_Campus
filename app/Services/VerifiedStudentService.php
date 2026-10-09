@@ -55,6 +55,7 @@ class VerifiedStudentService
                 'verified_student_id' => $student->id,
                 'program_id'          => $program->id,
                 'admission_id'        => !empty($data['admission_id']) ? (int) $data['admission_id'] : null,
+                'scholarship_application_id' => !empty($data['scholarship_application_id']) ? (int) $data['scholarship_application_id'] : null,
                 'enrollment_date'     => $data['enrollment_date'],
                 'graduation_date'     => $data['graduation_date'] ?? null,
                 'suspended_date'      => $data['suspended_date'] ?? null,

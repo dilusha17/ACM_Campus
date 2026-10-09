@@ -53,13 +53,20 @@ interface Certificate {
 }
 
 interface ProgramEnrollment {
-  program_slug: string;
+  program_slug: string | null;
+  program_title: string | null;
   status: "active" | "graduated" | "suspended";
   enrollment_date: string | null;
   graduation_date: string | null;
   suspended_date: string | null;
   certificate: Certificate | null;
 }
+
+// Enrolments can reference a programme that no longer exists, so slug/title may be null.
+const programName = (prog: ProgramEnrollment) =>
+  prog.program_title ??
+  prog.program_slug?.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) ??
+  "Programme not recorded";
 
 interface VerifyResult {
   student_id: string;
@@ -92,7 +99,8 @@ const statusConfig = {
   },
 };
 
-const levelFromSlug = (slug: string): string => {
+const levelFromSlug = (slug: string | null): string => {
+  if (!slug) return "Degree";
   if (slug.startsWith("bsc-") || slug === "bsc") return "Degree (BSc)";
   if (slug.startsWith("diploma-")) return "Diploma";
   if (slug.startsWith("certificate-")) return "Certificate";
@@ -282,12 +290,12 @@ const Verify = ({ result, searched, query }: Props) => {
                           {result.programs.map((prog, i) => {
                             const cfg = statusConfig[prog.status] ?? statusConfig.active;
                             const StatusIcon = cfg.icon;
-                            const certKey = `${prog.program_slug}-${i}`;
+                            const certKey = `${prog.program_slug ?? "programme"}-${i}`;
                             return (
                               <div key={certKey} className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                   <p className="font-semibold text-foreground text-sm">
-                                    {prog.program_slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                                    {programName(prog)}
                                   </p>
                                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.cls}`}>
                                     <StatusIcon size={11} />
@@ -345,7 +353,7 @@ const Verify = ({ result, searched, query }: Props) => {
                                           <p className="font-display text-3xl font-bold text-primary">{result.full_name}</p>
                                           <p className="font-body text-sm text-muted-foreground">has successfully completed the programme of</p>
                                           <p className="font-display text-xl font-semibold text-foreground">
-                                            {prog.program_slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                                            {programName(prog)}
                                           </p>
                                           <p className="font-body text-sm text-muted-foreground">
                                             {prog.certificate.level} — Awarded{" "}

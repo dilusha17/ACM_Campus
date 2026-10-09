@@ -31,7 +31,14 @@ interface Program {
 }
 
 interface Props {
-  programs: Program[];
+  programs: {
+    data: Program[];
+    links: any[];
+    last_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+  };
   filters: { search?: string; level?: string };
 }
 
@@ -80,7 +87,7 @@ const Index = ({ programs, filters }: Props) => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Programmes</h1>
             <p className="text-gray-400 text-sm mt-0.5">
-              {programs.length} programme{programs.length !== 1 ? "s" : ""}
+              {programs.total} programme{programs.total !== 1 ? "s" : ""}
             </p>
           </div>
           <Link
@@ -141,7 +148,7 @@ const Index = ({ programs, filters }: Props) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {programs.length === 0 && (
+                {programs.data.length === 0 && (
                   <tr>
                     <td
                       colSpan={5}
@@ -151,7 +158,7 @@ const Index = ({ programs, filters }: Props) => {
                     </td>
                   </tr>
                 )}
-                {programs.map((prog) => (
+                {programs.data.map((prog) => (
                   <tr key={prog.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-5 py-3.5">
                       <div className="font-medium text-gray-900">{prog.title}</div>
@@ -200,6 +207,28 @@ const Index = ({ programs, filters }: Props) => {
             </table>
           </div>
         </div>
+
+        {/* Pagination */}
+        {programs.last_page > 1 && (
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-xs text-gray-400">Showing {programs.from}–{programs.to} of {programs.total}</p>
+            <div className="flex gap-1.5 justify-center flex-wrap">
+              {programs.links.map((link: any, i: number) => (
+                <Link
+                  key={i}
+                  href={link.url ?? "#"}
+                  preserveState
+                  className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    link.active
+                      ? "bg-[#1a3a5c] text-white shadow-xs"
+                      : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  } ${!link.url ? "opacity-40 pointer-events-none" : ""}`}
+                  dangerouslySetInnerHTML={{ __html: link.label }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Delete AlertDialog */}

@@ -65,6 +65,7 @@ export interface VerifiedStudentFormValues {
   address: string;
   program_id: string;
   admission_id: string;
+  scholarship_application_id: string;
   detail_request_id: string;
   enrollment_date: string;
   graduation_date: string;
@@ -103,6 +104,7 @@ const defaultValues: VerifiedStudentFormValues = {
   address: "",
   program_id: "",
   admission_id: "",
+  scholarship_application_id: "",
   detail_request_id: "",
   enrollment_date: "",
   graduation_date: "",

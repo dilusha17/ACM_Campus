@@ -7,6 +7,7 @@ use App\Models\Admission;
 use App\Models\Certificate;
 use App\Models\Nationality;
 use App\Models\Program;
+use App\Models\StudentDetailRequest;
 use App\Models\StudentProgram;
 use App\Models\VerifiedStudent;
 use App\Services\VerifiedStudentService;
@@ -91,6 +92,7 @@ class StudentController extends Controller
             'address'            => 'required|string|max:500',
             'program_id'         => 'required|integer|exists:programs,id',
             'admission_id'       => 'nullable|integer|exists:admissions,id',
+            'scholarship_application_id' => 'nullable|integer|exists:scholarship_applications,id',
             'detail_request_id'  => 'nullable|integer|exists:student_detail_requests,id',
             'enrollment_date'    => 'required|date',
             'graduation_date'    => 'nullable|date|required_if:status,graduated',
@@ -114,7 +116,45 @@ class StudentController extends Controller
 
     public function edit(VerifiedStudent $student)
     {
-        $student->load(['studentPrograms.certificate', 'studentPrograms.program']);
+        $student->load([
+            'studentPrograms.certificate',
+            'studentPrograms.program',
+            'studentPrograms.admission',
+            'studentPrograms.scholarshipApplication',
+        ]);
+
+        // Students created from a scholarship before the direct link existed: fall back to the details request.
+        $scholarshipRequests = StudentDetailRequest::with('scholarshipApplication')
+            ->where('verified_student_id', $student->id)
+            ->whereNotNull('scholarship_application_id')
+            ->get();
+
+        $student->studentPrograms->each(function ($sp) use ($scholarshipRequests) {
+            $scholarship = $sp->scholarshipApplication
+                ?? $scholarshipRequests->firstWhere('program_id', $sp->program_id)?->scholarshipApplication;
+
+            $registration = ['type' => 'manual'];
+
+            if ($sp->admission) {
+                $registration = [
+                    'type'   => 'admission',
+                    'id'     => $sp->admission->id,
+                    'label'  => 'Admission #' . $sp->admission->id,
+                    'status' => $sp->admission->status,
+                    'url'    => route('admin.admissions.show', $sp->admission->id),
+                ];
+            } elseif ($scholarship) {
+                $registration = [
+                    'type'   => 'scholarship',
+                    'id'     => $scholarship->id,
+                    'label'  => 'Scholarship #' . $scholarship->id . ' (' . $scholarship->scheme . ')',
+                    'status' => $scholarship->status,
+                    'url'    => route('admin.scholarships.show', $scholarship->id),
+                ];
+            }
+
+            $sp->setAttribute('registration', $registration);
+        });
 
         $availableCerts = Certificate::whereDoesntHave('studentProgram')
             ->where('status', 'active')

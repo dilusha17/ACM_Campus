@@ -11,6 +11,7 @@ class StudentProgram extends Model
         'verified_student_id',
         'program_id',
         'admission_id',
+        'scholarship_application_id',
         'enrollment_date',
         'graduation_date',
         'suspended_date',
@@ -35,6 +36,11 @@ class StudentProgram extends Model
     public function admission()
     {
         return $this->belongsTo(Admission::class);
+    }
+
+    public function scholarshipApplication()
+    {
+        return $this->belongsTo(ScholarshipApplication::class);
     }
 
     public function certificate()

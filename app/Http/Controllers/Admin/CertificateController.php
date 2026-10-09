@@ -8,6 +8,7 @@ use App\Models\Program;
 use App\Models\StudentProgram;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class CertificateController extends Controller
@@ -46,6 +47,7 @@ class CertificateController extends Controller
                     'program_slug'       => $cert->program_slug,
                     'program_title'      => $cert->program?->title ?? $cert->studentProgram?->program?->title ?? $cert->program_slug,
                     'issue_date'         => $cert->issue_date,
+                    'certificate_sample' => $cert->certificate_sample,
                     'level'              => $cert->level,
                     'status'             => $cert->status,
                     'assigned'           => $cert->studentProgram !== null,
@@ -177,12 +179,92 @@ class CertificateController extends Controller
         ]);
     }
 
+    public function edit(Certificate $certificate)
+    {
+        $certificate->load(['program', 'studentProgram.verifiedStudent']);
+
+        return Inertia::render('Admin/Certificates/Edit', [
+            'certificate' => [
+                'id'                 => $certificate->id,
+                'certificate_number' => $certificate->certificate_number,
+                'program_id'         => $certificate->program_id,
+                'assigned'           => $certificate->studentProgram !== null,
+                'program_title'      => $certificate->program?->title ?? $certificate->studentProgram?->program?->title,
+                'program_slug'       => $certificate->program_slug,
+                'level'              => $certificate->level,
+                'issue_date'         => $certificate->issue_date?->toDateString(),
+                'status'             => $certificate->status,
+                'certificate_sample' => $certificate->certificate_sample,
+                'student'            => $certificate->student ? [
+                    'student_id' => $certificate->student->student_id,
+                    'full_name'  => $certificate->student->full_name,
+                ] : null,
+            ],
+            'programs' => Program::where('is_active', true)
+                ->orWhere('id', $certificate->program_id)
+                ->orderBy('title')
+                ->get(['id', 'slug', 'title', 'level']),
+        ]);
+    }
+
     public function update(Request $request, Certificate $certificate)
     {
-        $request->validate(['status' => 'required|in:active,revoked']);
-        $certificate->update(['status' => $request->status]);
+        // Quick status change (Revoke / Reinstate buttons on the list page).
+        if (! $request->hasAny(['program_id', 'level', 'issue_date', 'sample', 'remove_sample'])) {
+            $request->validate(['status' => 'required|in:active,revoked']);
+            $certificate->update(['status' => $request->status]);
 
-        return back()->with('success', 'Certificate status updated.');
+            return back()->with('success', 'Certificate status updated.');
+        }
+
+        // Full edit. The certificate number is intentionally not editable: it is printed on the
+        // certificate and used for verification, so it stays the same even if the programme changes.
+        $data = $request->validate([
+            'program_id'    => 'required|exists:programs,id',
+            'level'         => 'required|in:Degree,Diploma,Certificate,Master,PhD',
+            'issue_date'    => 'required|date',
+            'status'        => 'required|in:active,revoked',
+            'sample'        => 'nullable|file|mimes:jpg,jpeg,png,webp|max:20480',
+            'remove_sample' => 'nullable|boolean',
+        ]);
+
+        if ((int) $data['program_id'] !== (int) $certificate->program_id && $certificate->studentProgram()->exists()) {
+            throw ValidationException::withMessages([
+                'program_id' => 'This certificate is assigned to a student enrolment, so its programme cannot be changed. Unassign it first.',
+            ]);
+        }
+
+        $update = [
+            'program_id' => $data['program_id'],
+            'level'      => $data['level'],
+            'issue_date' => $data['issue_date'],
+            'status'     => $data['status'],
+        ];
+
+        $replacing = $request->hasFile('sample');
+
+        if (($replacing || $request->boolean('remove_sample')) && $certificate->certificate_sample) {
+            $old = public_path($certificate->certificate_sample);
+            if (is_file($old)) {
+                unlink($old);
+            }
+            $update['certificate_sample'] = null;
+        }
+
+        if ($replacing) {
+            $slug = Program::find($data['program_id'])?->slug ?? 'unassigned';
+            $dir  = public_path('sample_certificates/' . $slug);
+            if (! is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+            $file = $certificate->certificate_number . '.' . $request->file('sample')->getClientOriginalExtension();
+            $request->file('sample')->move($dir, $file);
+            $update['certificate_sample'] = 'sample_certificates/' . $slug . '/' . $file;
+        }
+
+        $certificate->update($update);
+
+        return redirect()->route('admin.certificates.index')->with('success', 'Certificate updated.');
     }
 
     public function destroy(Certificate $certificate)

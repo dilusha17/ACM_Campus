@@ -37,6 +37,7 @@ class VerifyController extends Controller
                 'image_path' => $student->image_path,
                 'programs'   => $student->studentPrograms->map(fn ($sp) => [
                     'program_slug'    => $sp->program_slug,
+                    'program_title'   => $sp->program_title,
                     'status'          => $sp->status,
                     'enrollment_date' => $sp->enrollment_date?->format('Y-m-d'),
                     'graduation_date' => $sp->graduation_date?->format('Y-m-d'),

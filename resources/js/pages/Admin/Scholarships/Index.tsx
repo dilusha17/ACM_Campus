@@ -23,12 +23,12 @@ const StatusBadge = ({ status }: { status: string }) => (
 );
 
 interface Application {
-  id: number; full_name: string; email: string; program_slug: string;
+  id: number; full_name: string; email: string; program_slug: string | null; program_title: string | null;
   scheme: string; status: string; created_at: string;
 }
 
 interface Props {
-  applications: { data: Application[]; links: any[]; meta: any };
+  applications: { data: Application[]; links: any[]; last_page: number; total: number };
   filters: { status?: string; scheme?: string; search?: string };
 }
 
@@ -41,7 +41,7 @@ const Index = ({ applications, filters }: Props) => {
       <div className="space-y-6 max-w-7xl">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Scholarship Applications</h1>
-          <p className="text-gray-500 text-sm mt-1">{applications.meta?.total ?? 0} total applications</p>
+          <p className="text-gray-500 text-sm mt-1">{applications.total ?? 0} total applications</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-wrap gap-3">
@@ -80,12 +80,20 @@ const Index = ({ applications, filters }: Props) => {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div>
+            <table className="w-full text-sm table-fixed">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60">
-                  {["Name","Email","Programme","Scheme","Status","Date",""].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  {[
+                    { label: "Name", width: "w-[18%]" },
+                    { label: "Email", width: "w-[23%]" },
+                    { label: "Programme", width: "w-[20%]" },
+                    { label: "Scheme", width: "w-[11%]" },
+                    { label: "Status", width: "w-[10%]" },
+                    { label: "Date", width: "w-[10%]" },
+                    { label: "", width: "w-20" },
+                  ].map((h, i) => (
+                    <th key={i} className={`text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider truncate ${h.width}`}>{h.label}</th>
                   ))}
                 </tr>
               </thead>
@@ -99,13 +107,13 @@ const Index = ({ applications, filters }: Props) => {
                 ) : (
                   applications.data.map((a) => (
                     <tr key={a.id} className="hover:bg-gray-50/70 transition-colors">
-                      <td className="px-4 py-3.5 font-medium text-gray-800 whitespace-nowrap">{a.full_name}</td>
-                      <td className="px-4 py-3.5 text-gray-500">{a.email}</td>
-                      <td className="px-4 py-3.5 text-gray-500 max-w-36"><p className="truncate">{a.program_slug}</p></td>
-                      <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">{a.scheme}</td>
-                      <td className="px-4 py-3.5"><StatusBadge status={a.status} /></td>
-                      <td className="px-4 py-3.5 text-gray-400 whitespace-nowrap">{new Date(a.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-3.5 font-medium text-gray-800"><p className="truncate" title={a.full_name}>{a.full_name}</p></td>
+                      <td className="px-3 py-3.5 text-gray-500"><p className="truncate" title={a.email}>{a.email}</p></td>
+                      <td className="px-3 py-3.5 text-gray-500"><p className="truncate" title={a.program_title ?? a.program_slug ?? undefined}>{a.program_title ?? a.program_slug ?? "—"}</p></td>
+                      <td className="px-3 py-3.5 text-gray-500"><p className="truncate">{a.scheme}</p></td>
+                      <td className="px-3 py-3.5"><StatusBadge status={a.status} /></td>
+                      <td className="px-3 py-3.5 text-gray-400 truncate">{new Date(a.created_at).toLocaleDateString()}</td>
+                      <td className="px-3 py-3.5">
                         <Link
                           href={`/admin/scholarships/${a.id}`}
                           className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
@@ -121,7 +129,7 @@ const Index = ({ applications, filters }: Props) => {
           </div>
         </div>
 
-        {applications.meta?.last_page > 1 && (
+        {applications.last_page > 1 && (
           <div className="flex gap-1.5 justify-center flex-wrap">
             {applications.links.map((link: any, i: number) => (
               <Link key={i} href={link.url ?? "#"} preserveState
