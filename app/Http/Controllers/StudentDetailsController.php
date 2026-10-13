@@ -22,10 +22,15 @@ class StudentDetailsController extends Controller
             default                       => 'open',
         };
 
+        // Pre-fill first/last name from the application's full name (same split the admin screens use).
+        [$firstName, $lastName] = array_pad(preg_split('/\s+/', trim($detailRequest->full_name ?? ''), 2) ?: [], 2, '');
+
         return Inertia::render('StudentDetails', [
             'state'   => $state,
             'request' => $state === 'open' ? [
                 'token'         => $detailRequest->token,
+                'first_name'    => $firstName,
+                'last_name'     => $lastName,
                 'full_name'     => $detailRequest->full_name,
                 'email'         => $detailRequest->email,
                 'program_title' => $detailRequest->program?->title,
@@ -44,16 +49,21 @@ class StudentDetailsController extends Controller
             ? 'required|string|max:20|unique:verified_students,passport'
             : 'required|string|max:20|unique:verified_students,nic';
 
+        // Same rules as the admin "Add Verified Student" form (Admin\StudentController@store).
         $data = $request->validate([
-            'id_type'         => 'required|in:NIC,Passport',
-            'id_number'       => $idUniqueRule,
-            'date_of_birth'   => 'required|date|before:today',
-            'nationality_id'  => 'required|exists:nationalities,id',
-            'gender'          => 'required|in:male,female,not_stated',
-            'country_code_id' => 'required|exists:country_codes,id',
-            'phone'           => ['required', 'string', 'max:30', 'regex:/^\d+$/'],
-            'address'         => 'required|string|max:500',
-            'image'           => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'id_type'            => 'required|in:NIC,Passport',
+            'id_number'          => $idUniqueRule,
+            'first_name'         => 'required|string|max:100',
+            'last_name'          => 'required|string|max:100',
+            'full_name'          => 'required|string|max:255',
+            'email'              => 'required|email|max:255|unique:verified_students,email',
+            'date_of_birth'      => 'required|date|before:today',
+            'nationality_id'     => 'required|exists:nationalities,id',
+            'gender'             => 'required|in:male,female,not_stated',
+            'country_code_id'    => 'required|exists:country_codes,id',
+            'phone'              => ['required', 'string', 'max:30', 'regex:/^\d+$/'],
+            'address'            => 'required|string|max:500',
+            'image'              => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
         ], [
             'image.max' => 'The photo must be smaller than 5 MB.',
         ]);

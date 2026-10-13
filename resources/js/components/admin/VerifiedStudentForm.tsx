@@ -1,7 +1,4 @@
-import { Link, useForm, usePage } from "@inertiajs/react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Link, useForm } from "@inertiajs/react";
 import {
   Select,
   SelectContent,
@@ -11,26 +8,14 @@ import {
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Combobox } from "@/components/ui/combobox";
-import { Progress } from "@/components/ui/progress";
-import { ImageCropper } from "@/components/ui/image-cropper";
 import { useState } from "react";
-import { dialCodeOptions, type CountryCode } from "@/lib/countryCodes";
-
-const Field = ({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) => (
-  <div className="space-y-1.5">
-    <Label className="text-sm font-medium text-gray-700">{label}</Label>
-    {children}
-    {error && <p className="text-red-500 text-xs">{error}</p>}
-  </div>
-);
+import {
+  Field,
+  StudentInformationCard,
+  StudentPhotoCard,
+  formatDate,
+  parseDate,
+} from "@/components/student/StudentInformationCard";
 
 export interface VerifiedStudentNationality {
   id: number;
@@ -60,6 +45,7 @@ export interface VerifiedStudentFormValues {
   email: string;
   nationality_id: string;
   gender: string;
+  country_code_id: string;
   phone_country_code: string;
   phone: string;
   address: string;
@@ -99,6 +85,7 @@ const defaultValues: VerifiedStudentFormValues = {
   email: "",
   nationality_id: "",
   gender: "",
+  country_code_id: "",
   phone_country_code: "",
   phone: "",
   address: "",
@@ -114,15 +101,6 @@ const defaultValues: VerifiedStudentFormValues = {
   image: null,
 };
 
-const parseDate = (value: string) => (value ? new Date(value.slice(0, 10) + "T00:00:00") : undefined);
-const formatDate = (value: Date | undefined) => {
-  if (!value) return "";
-  const y = value.getFullYear();
-  const m = String(value.getMonth() + 1).padStart(2, "0");
-  const d = String(value.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-};
-
 const VerifiedStudentForm = ({
   nationalities,
   programs,
@@ -136,7 +114,6 @@ const VerifiedStudentForm = ({
   submittedImageUrl,
   initialValues,
 }: VerifiedStudentFormProps) => {
-  const { countryCodes } = usePage<{ countryCodes: CountryCode[] }>().props;
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const { data, setData, post, processing, errors } = useForm<VerifiedStudentFormValues>({
     ...defaultValues,
@@ -167,126 +144,13 @@ const VerifiedStudentForm = ({
     <form onSubmit={submit} className="space-y-5">
       {introText && <p className="text-xs text-gray-400">{introText}</p>}
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-50">
-          <h2 className="font-semibold text-gray-800 text-sm">Student Informations</h2>
-        </div>
-
-        <div className="p-6 grid sm:grid-cols-2 gap-5">
-          <Field label="Student ID">
-            <div className="relative">
-              <Input
-                value={nextStudentId}
-                disabled
-                readOnly
-                className="rounded-xl border-gray-200 bg-gray-50 text-gray-500 font-mono cursor-not-allowed"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 select-none">Auto</span>
-            </div>
-          </Field>
-
-          <Field label="NIC / Passport No. *" error={errors.id_number}>
-            <div className="flex gap-2">
-              <Select value={data.id_type} onValueChange={(value) => setData("id_type", value)}>
-                <SelectTrigger className="rounded-xl border-gray-200 w-36 shrink-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NIC">NIC</SelectItem>
-                  <SelectItem value="Passport">Passport</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                required
-                value={data.id_number}
-                onChange={(e) => setData("id_number", e.target.value)}
-                placeholder={data.id_type === "NIC" ? "e.g. 199012345678" : "e.g. N1234567"}
-                maxLength={20}
-                className="rounded-xl border-gray-200 flex-1"
-              />
-            </div>
-          </Field>
-
-          <Field label="First Name *" error={errors.first_name}>
-            <Input required value={data.first_name} onChange={(e) => setData("first_name", e.target.value)} placeholder="Jane" className="rounded-xl border-gray-200" />
-          </Field>
-
-          <Field label="Last Name *" error={errors.last_name}>
-            <Input required value={data.last_name} onChange={(e) => setData("last_name", e.target.value)} placeholder="Doe" className="rounded-xl border-gray-200" />
-          </Field>
-
-          <Field label="Full Name *" error={errors.full_name}>
-            <Input required value={data.full_name} onChange={(e) => setData("full_name", e.target.value)} placeholder="Jane Doe" className="rounded-xl border-gray-200" />
-          </Field>
-
-          <Field label="Email *" error={errors.email}>
-            <Input type="email" required value={data.email} onChange={(e) => setData("email", e.target.value)} placeholder="student@email.com" className="rounded-xl border-gray-200" />
-          </Field>
-
-          <Field label="Date of Birth *" error={errors.date_of_birth}>
-            <DatePicker value={parseDate(data.date_of_birth)} onChange={(value) => setData("date_of_birth", formatDate(value))} placeholder="Pick date of birth" />
-          </Field>
-
-          <Field label="Nationality *" error={errors.nationality_id}>
-            <Select value={data.nationality_id} onValueChange={(value) => setData("nationality_id", value)}>
-              <SelectTrigger className="rounded-xl border-gray-200">
-                <SelectValue placeholder="Select nationality..." />
-              </SelectTrigger>
-              <SelectContent>
-                {nationalities.map((nationality) => (
-                  <SelectItem key={nationality.id} value={String(nationality.id)}>{nationality.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <Field label="Gender *" error={errors.gender}>
-            <Select value={data.gender} onValueChange={(value) => setData("gender", value)}>
-              <SelectTrigger className="rounded-xl border-gray-200">
-                <SelectValue placeholder="Select gender..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-                <SelectItem value="not_stated">Prefer Not to Say</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <div className="sm:col-span-2 grid sm:grid-cols-[16rem_1fr] gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-gray-700">Country <span className="text-red-500">*</span></Label>
-              <Combobox
-                options={dialCodeOptions(countryCodes)}
-                value={data.phone_country_code}
-                onChange={(v) => setData("phone_country_code", v)}
-                placeholder="Select country..."
-                searchPlaceholder="Search country..."
-              />
-              {errors.phone_country_code && <p className="text-red-500 text-xs">{errors.phone_country_code}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-gray-700">Phone Number <span className="text-red-500">*</span></Label>
-              <Input
-                required
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={data.phone}
-                onChange={(e) => setData("phone", e.target.value.replace(/\D/g, ""))}
-                placeholder="Digits only"
-                className="rounded-xl border-gray-200"
-              />
-              {errors.phone && <p className="text-red-500 text-xs">{errors.phone}</p>}
-            </div>
-          </div>
-
-          <div className="sm:col-span-2">
-            <Field label="Address *" error={errors.address}>
-              <Textarea required value={data.address} onChange={(e) => setData("address", e.target.value)} placeholder="Full postal address" className="rounded-xl border-gray-200 min-h-[96px]" />
-            </Field>
-          </div>
-        </div>
-      </div>
+      <StudentInformationCard
+        data={data}
+        setData={(key, value) => setData(key, value)}
+        errors={errors}
+        nationalities={nationalities}
+        nextStudentId={nextStudentId}
+      />
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-50">
@@ -369,25 +233,12 @@ const VerifiedStudentForm = ({
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-50">
-          <h2 className="font-semibold text-gray-800 text-sm">Student Photo</h2>
-        </div>
-        <div className="p-6">
-          <Field label="" error={errors.image}>
-            <ImageCropper aspectRatio={1} maxSizeMb={5} currentUrl={submittedImageUrl} onChange={(file) => setData("image", file)} label="" />
-            {uploadProgress !== null && (
-              <div className="mt-3 space-y-1.5">
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>Uploading...</span>
-                  <span>{uploadProgress}%</span>
-                </div>
-                <Progress value={uploadProgress} className="h-1.5" />
-              </div>
-            )}
-          </Field>
-        </div>
-      </div>
+      <StudentPhotoCard
+        onChange={(file) => setData("image", file)}
+        error={errors.image}
+        currentUrl={submittedImageUrl}
+        uploadProgress={uploadProgress}
+      />
 
       <input type="hidden" value={data.admission_id} readOnly name="admission_id" />
 

@@ -16,6 +16,8 @@ return new class extends Migration
             $table->unsignedBigInteger('program_id');
             $table->string('full_name');
             $table->string('email');
+            $table->string('first_name', 100)->nullable();
+            $table->string('last_name', 100)->nullable();
             $table->timestamp('expires_at');
             $table->timestamp('submitted_at')->nullable();
 

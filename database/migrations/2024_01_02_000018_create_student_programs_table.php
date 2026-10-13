@@ -13,6 +13,7 @@ return new class extends Migration
             $table->unsignedBigInteger('verified_student_id');
             $table->unsignedBigInteger('program_id');
             $table->unsignedBigInteger('admission_id')->nullable();
+            $table->unsignedBigInteger('scholarship_application_id')->nullable();
             $table->foreign('admission_id')->references('id')->on('admissions')->nullOnDelete();
             $table->date('enrollment_date');
             $table->date('graduation_date')->nullable();
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->foreign('verified_student_id')->references('id')->on('verified_students')->cascadeOnDelete();
             $table->foreign('program_id')->references('id')->on('programs')->cascadeOnDelete();
             $table->foreign('certificate_id')->references('id')->on('programs_certificates')->nullOnDelete();
+            $table->foreign('scholarship_application_id')->references('id')->on('scholarship_applications')->nullOnDelete();
         });
     }
 

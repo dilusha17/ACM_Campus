@@ -24,7 +24,7 @@ const statusStyles: Record<string, string> = {
 };
 
 interface Admission {
-  id: number; full_name: string; email: string; phone: string; phone_country_code: string | null; nationality: string;
+  id: number; full_name: string; email: string; phone: string; country_code_id: number | null; phone_country_code: string | null; nationality: string;
   nationality_id: number | null; program_id: number; program_title: string | null; education_history: string; english_qualifications: string | null;
   declaration_accepted: boolean; status: string; created_at: string;
 }
@@ -200,6 +200,7 @@ const Show = ({
                       full_name: admission.full_name,
                       email: admission.email,
                       nationality_id: admission.nationality_id ? String(admission.nationality_id) : "",
+                      country_code_id: admission.country_code_id ? String(admission.country_code_id) : "",
                       phone_country_code: admission.phone_country_code ?? "",
                       phone: admission.phone.replace(/\D/g, ""),
                       ...(detail_request?.values ?? {}),
